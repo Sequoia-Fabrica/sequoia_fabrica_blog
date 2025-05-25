@@ -11,17 +11,17 @@ draft: false
 
 This is a story about a cat. Her name is Cinder.
 
-{{% figure src="cinder_stretch.png" %}} 
+{{% figure src="cinder_stretch.jpeg" %}}
 Cinder is a cat
 {{% /figure %}}
 
-{{% figure src="cinder_yawn.png" %}} 
+{{% figure src="cinder_yawn.jpeg" %}}
 Cinder
 {{% /figure %}}
 
 One day, she turned into a dragon.
 
-{{% figure src="cinder_dragon.png" %}} 
+{{% figure src="cinder_dragon.jpeg" %}}
 Cinder is a cat
 {{% /figure %}}
 

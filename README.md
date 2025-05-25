@@ -24,6 +24,9 @@ There is a handy guide!
 - If running locally, check out [http://localhost:1313/article-template-how-to](http://localhost:1313/article-template-how-to)
 - raw markdown at [content/article-template-how-to/index.md](./content/article-template-how-to/index.md)
 
+### working with images:
+
+It's helpful to resize all images to max 800x800 before committing them to github (`sips -Z 800 *.jpeg`). It's also nice to remove exif data which may contain location and other sensitive information: `exiftool -overwrite_original -all= <image.jpg>`
 
 ## Authors
 
