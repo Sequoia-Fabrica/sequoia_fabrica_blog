@@ -24,6 +24,9 @@ There is a handy guide!
 - If running locally, check out [http://localhost:1313/article-template-how-to](http://localhost:1313/article-template-how-to)
 - raw markdown at [content/article-template-how-to/index.md](./content/article-template-how-to/index.md)
 
+### working with images:
+
+It's helpful to resize all images to max 800x800 before committing them to github (`sips -Z 800 *.jpeg`). It's also nice to remove exif data which may contain location and other sensitive information: `exiftool -overwrite_original -all= <image.jpg>`
 
 ## Authors
 
@@ -55,21 +58,46 @@ depends on
 
 ## dithering tool
 
-`dither_images.py` recursively traverses folders and creates dithered versions of the images it finds. These are stored in the same folder as the images in a folder called "dithers".
+`dither_images.py` recursively traverses folders and creates dithered versions of the images it finds. It also reduces the size of all images to 800x800. These are stored in the same folder as the images in a folder called "dithers".
+
+#### TODO:
+* bug: images taller than wide are rotated when the 800x800 thumbnail is made
+* bug: images smaller than 800x800 are scaled _up_
+* bug: pngs with transparency turn transparent areas black
+* feature: configurable image size
 
 ### Usage
 
-Dither all the images found in the subdirectories of `content` 
+Dither all the images found in the subdirectories of `content` as grayscale:
 `python3 utils/dither_images.py --directory content/`
 
-Colorize the dithers as well based on the LTM categories:
-`python3 utils/dither_images.py --directory content/ --colorize`
+Preserve the colors of the images when dithering (results in images that are 2-3x the size of the grayscale ones, but still smaller than originals):
+`python3 utils/dither_images.py --directory content/ --preserve-color`
 
 Run the script with more debug output:
-`python3 utils/dither_images.py --directory content/ --colorize --verbose`
+`python3 utils/dither_images.py --directory content/ --colorize-by-category --verbose`
 
 Remove all dithered files in the subdirectories of `content`:
 `python3 utils/dither_images.py --remove --directory content/`
+
+```
+❯ python3 utils/dither_images.py --help
+usage:
+        This script recursively traverses folders and creates dithered versions of the images it finds.
+        These are stored in the same folder as the images in a folder called "dithers".
+
+       [-h] [-d DIRECTORY] [-rm] [-c] [-p] [-v]
+
+options:
+  -h, --help            show this help message and exit
+  -d DIRECTORY, --directory DIRECTORY
+                        Set the directory to traverse
+  -rm, --remove         Removes all the folders with dithers and their contents
+  -c, --colorize-by-category
+                        Colorizes grayscale dithered images by category
+  -p, --preserve-color  Preserve the color of the original image -- do not grayscale
+  -v, --verbose         Print out more detailed information about what this script is doing
+```
 
 ## Page Size Calculator
 
