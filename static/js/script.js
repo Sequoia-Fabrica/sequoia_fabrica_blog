@@ -1,3 +1,5 @@
+// static/js/script.js
+
 // console.log('script loaded');
 
 let url = "/api/stats.json";
@@ -9,31 +11,34 @@ let general_stats = [];
 loadJSON();
 
 async function loadJSON() {
-    const response = await fetch(url);
-    const data = await response.json();
-    setupBatteryMeter(data);
-    populateDashboard(data);
-    populateForecast(data);
+    try {
+        const response = await fetch(url, { cache: "no-store" });
+        const data = await response.json();
+        setupBatteryMeter(data);
+        populateDashboard(data);
+        populateForecast(data);
 
-    if (window.location.href.indexOf("/power/") > -1) {
-        //load general stats on power page
-        populateData(data);
+        if (window.location.href.indexOf("/power/") > -1) {
+            populateData(data);
+        }
+    } catch (e) {
+        console.error("Failed to load JSON:", e);
     }
 }
 
 function setupBatteryMeter(data) {
-    //setup visible battery level
-    let level = parseInt(data.charge);
-    let indicator = document.getElementById("battery_data");
-    document.getElementById("battery").style.height = 100 - level + "%";
-    // indicator.style.top = 100 - parseInt(level) + "vh";
-    indicator.style.top = 100 - level + "vh";
+    const soc_pct = safeInt(data.soc_pct, safeInt(data.charge, 0)); // fallback to legacy 'charge'
+    const charging = inferCharging(data);
 
-    if (data.charging == "no") {
-        // battery is draining, show battery level
+    const level = clampInt(soc_pct, 0, 100);
+    const indicator = document.getElementById("battery_data");
+
+    document.getElementById("battery").style.height = (100 - level) + "%";
+    indicator.style.top = (100 - level) + "vh";
+
+    if (!charging) {
         document.getElementById("level").textContent = level;
     } else {
-        // sun is out!
         indicator.setAttribute("data-charging", "yes");
     }
 }
@@ -41,25 +46,42 @@ function setupBatteryMeter(data) {
 function pushData(arr) {
     // returns a list of dt/dd pairs from a two-dimensional array
     let stats = [];
-    for (i = 0; i < arr.length; i++) {
+    for (let i = 0; i < arr.length; i++) {
         stats.push("<dt>" + arr[i][0] + "</dt><dd>" + arr[i][1] + "</dd>");
     }
     return stats;
 }
 
 function populateData(data) {
-    let load = ((data.load_15 / 2) * 100).toFixed(2) + "%";
+    const local_time = data.local_time || "";
+    const uptime = data.uptime || "";
 
-    let general_stats = [
-        ["Local time", data.local_time],
-        ["Uptime", data.uptime],
-        ["Power usage", data.W],
-        ["Current draw", data.A],
-        ["Voltage", data.V],
-        ["CPU temperature", data.temperature + "°C"],
-        ["CPU load average *", load],
-        ["Solar panel active", data.charging],
-        ["Battery capacity", data.charge + "%"],
+    // Prefer true system load; fallback to adapter input; finally old 'W'
+    const load_W = num(data.load_W, num(data.p_in_W, num(data.W, 0)));
+    const batt_V = num(data.batt_V, num(data.V, 0));
+    const load_A = batt_V > 0 ? (load_W / batt_V) : null;
+
+    const cpuTemp = present(data.temperature) ? data.temperature + "°C" : "—";
+
+    // legacy: load_15 scaled into %
+    const loadPct = present(data.load_15) ? ((data.load_15 / 2) * 100).toFixed(2) + "%" : "—";
+
+    const charging = inferCharging(data);
+    const chargingStr = charging ? "yes" : "no";
+
+    const soc_pct = present(data.soc_pct) ? data.soc_pct : data.charge;
+    const socStr = present(soc_pct) ? soc_pct + "%" : "—";
+
+    const general_stats = [
+        ["Local time", local_time],
+        ["Uptime", uptime],
+        ["Power usage", formatW(load_W)],
+        ["Current draw (est.)", present(load_A) ? formatA(load_A) : "—"],
+        ["Voltage (battery bus)", present(batt_V) ? formatV(batt_V) : "—"],
+        ["CPU temperature", cpuTemp],
+        ["CPU load average *", loadPct],
+        ["Solar panel active", chargingStr],
+        ["Battery capacity", socStr],
     ];
 
     let dl = document.getElementById("server");
@@ -74,9 +96,9 @@ function populateForecast(data) {
 
     for (let i = 0; i < weather_data.length; i++) {
         let icon_name = weather_data[i];
+        if (!data[icon_name]) continue;
         let text = data[icon_name].replace(/-/g, " ");
         let weather_icon;
-        // use cloud icon for all overcast weather
         if (weather_ignore.includes(data[icon_name])) {
             weather_icon = "cloudy";
         } else {
@@ -90,67 +112,3 @@ function populateForecast(data) {
             '">' +
             weather_days[i] +
             '</span><span class="weather_icon ' +
-            weather_icon +
-            '"> </span><span class="weather_text"> ' +
-            text +
-            "</span>";
-    }
-
-    let weatherinfo = document.querySelectorAll(".forecast");
-
-    [].forEach.call(weatherinfo, function (target) {
-        target.innerHTML = forecast;
-    });
-}
-
-function populateDashboard(data) {
-    let bat_text = "";
-
-    if (data.charging == "no") {
-        bat_text = data.charge + "%, not charging";
-    } else {
-        bat_text = "charging";
-    }
-
-    let footer_data = [
-        ["Location", "San Francisco, CA"],
-        ["Time", data.local_time],
-        ["Battery status", bat_text],
-        ["Power used", data.W],
-        ["Uptime", data.uptime],
-    ];
-
-    document.getElementById("stats").innerHTML = pushData(footer_data).join("");
-}
-
-
-//mobile menu toggle
-const mobilemenu = document.getElementById("m-btn");
-mobilemenu.addEventListener("click", function () {
-    console.log("togglemenu");
-    document.getElementById("menu-list").classList.toggle("show");
-});
-
-const comments = document.querySelectorAll(".comment");
-if (comments.length > 0) {
-    //update comment count
-    document.getElementById("comment-count").innerText = comments.length;
-}
-
-const dither_icons = document.querySelectorAll(".dither-toggle");
-dither_icons.forEach((icon) => {
-    icon.addEventListener("click", function () {
-        let figure = icon.closest(".figure-controls").previousElementSibling;
-        let img = figure.querySelector("img");
-
-        if (figure.getAttribute("data-imgstate") == "dither") {
-            figure.setAttribute("data-imgstate", "undither");
-            let original = img.getAttribute("data-original");
-            img.src = original;
-        } else {
-            figure.setAttribute("data-imgstate", "dither");
-            let dither = img.getAttribute("data-dither");
-            img.src = dither;
-        }
-    });
-});
