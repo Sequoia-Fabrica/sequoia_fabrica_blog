@@ -1,7 +1,7 @@
 ---
-title: "First Blog Post"
-date: "2025-03-10"
-summary: "look ma no hands"
+title: First Blog Post
+date: 2025-03-10
+summary: look ma no hands
 draft: false
 authors:
   - Camille Teicheira
@@ -26,19 +26,20 @@ Our organization was founded November 2023. We are supported by donations and me
 
 ### What We Offer 
 
-* Weekly [classes and events](/events), open to the public, on subjects including arts, crafts, technology, and tools. 
-* Affordable [memberships](/membership), access to equipment and infrastructure for learning, arts, prototyping and creative projects.
-* Physical space for exhibitions, meetups, community and educational events.
+- Weekly [classes and events](/events), open to the public, on subjects including arts, crafts, technology, and tools. 
+- Affordable [memberships](/membership), access to equipment and infrastructure for learning, arts, prototyping and creative projects.
+- Physical space for exhibitions, meetups, community and educational events.
 
 ### Our Impact
 
 From January - July 2024:
-* Sequoia Fabrica offered more than 65 classes and meetups. We reached over 350 attendees.
-* Class topics include crafts, woodworking, sewing, electronics and digital fabrication. Two thirds of classes offered involve sewing or fiber arts.
-* Our classes are affordable, $20 on average. Sequoia Fabrica also ensures that no one is turned away for lack of funds.
-* 85% of classes are designed for beginners. Workshops for children and families represent 10% of our classes.
-* Sequoia Fabrica partnered with local governments to teach 6 free, off-site workshops in San Francisco and San Mateo counties.
-* The workshop hosts, on average, two free meetups monthly.
+
+- Sequoia Fabrica offered more than 65 classes and meetups. We reached over 350 attendees.
+- Class topics include crafts, woodworking, sewing, electronics and digital fabrication. Two thirds of classes offered involve sewing or fiber arts.
+- Our classes are affordable, $20 on average. Sequoia Fabrica also ensures that no one is turned away for lack of funds.
+- 85% of classes are designed for beginners. Workshops for children and families represent 10% of our classes.
+- Sequoia Fabrica partnered with local governments to teach 6 free, off-site workshops in San Francisco and San Mateo counties.
+- The workshop hosts, on average, two free meetups monthly.
 
 ### Who We Are
 
