@@ -5,10 +5,10 @@ const getWeather = require("./weather.js");
 const { getPowerInfo } = require("./powerinfo.js");
 const fetchAndParseICS = require('./parse_calendar.js')
 
-const STATS_FILE = "/var/www/html/api/stats.json";
-const LOG = true;
+const STATS_FILE = process.env.STATS_FILE || "/var/www/html/api/stats.json";
+const LOG = process.env.LOG || true;
 const ICS_URL = "http://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics"; // bookwhen public calendar url
-const CALENDAR_FILE = "/var/www/html/api/calendar.json"
+const CALENDAR_FILE = process.env.CALENDAR_FILE || "/var/www/html/api/calendar.json"
 
 async function writeFileAtomic(destPath, data) {
   const dir = path.dirname(destPath);
