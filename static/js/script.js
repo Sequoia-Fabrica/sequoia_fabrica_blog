@@ -127,7 +127,7 @@ function populateForecast(data) {
 
       return `
                 <span class="weather_day" id="${day}" title="${displayText}">${day}</span>
-                <span class="weather_icon ${weatherIcon}"> </span>
+                <span class="weather_icon icon ${weatherIcon}"> </span>
                 <span class="weather_text"> ${displayText}</span>
             `;
     })

@@ -26,6 +26,8 @@ These are live power statistics of the solar powered server:
 
 ## Battery meter
 
+TODO: UPDATE ALL OF THIS :)
+
 The background of the top of every page is a battery meter, designed to display the relationship of the energy powering the website and the visitor traffic consuming it. 
 
 The battery meter simply represents the voltage of our battery. For example, a storage capacity of 68% equals 12.68V, and a storage capacity of 8% equals 12.08V. The voltage reading is the "naked" data on which each battery meter relies to display a percentage. It doesn't always correlate with the energy storage capacity, because it's also influenced by the electric load (which lowers the voltage) and the solar insolation (which increases the voltage).
@@ -38,4 +40,4 @@ Showing a "correct" representation of the storage capacity requires calibration 
 
 Since 12 January 2020, the website runs on a 30W solar panel and a (new) 168 Wh lead-acid battery. From September 2018 to January 2020, the website was powered by a 50W solar panel and an (old) 86 Wh battery. 
 
-{{% figure src="solar-powered-server-weather-2.png" %}} The accessibility of this website depends on the weather in Barcelona, Spain. {{% /figure %}}
+{{% figure src="solar_setup.jpg" %}} The accessibility of this website depends on the weather in Potrero Hill, San Francisco, CA. {{% /figure %}}
