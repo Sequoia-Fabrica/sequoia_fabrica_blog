@@ -57,13 +57,14 @@ function setupBatteryMeter(data) {
 
     const batteryElement = document.getElementById("battery");
     const indicatorElement = document.getElementById("battery_data");
-    const levelElement = document.getElementById("level");
+    const levelElement = document.getElementById("battery-level");
 
     batteryElement.style.height = 100 - batteryLevel + "%";
     indicatorElement.style.top = 100 - batteryLevel + "vh";
 
     if (isCharging) {
         indicatorElement.setAttribute("data-charging", "yes");
+        levelElement.textContent = batteryLevel;
     } else {
         levelElement.textContent = batteryLevel;
     }
@@ -124,7 +125,7 @@ function populateForecast(data) {
 
             return `
                 <span class="weather_day" id="${day}" title="${displayText}">${day}</span>
-                <span class="weather_icon ${weatherIcon}"> </span>
+                <span class="weather_icon icon ${weatherIcon}"> </span>
                 <span class="weather_text"> ${displayText}</span>
             `;
         })

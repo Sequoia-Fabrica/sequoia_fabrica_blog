@@ -30,13 +30,14 @@
 }
 
 :root {
-    --color-primary: black;
-    --color-sky: #f0f8ff;
-    --color-sub: rgb(100, 100, 100);
+    --color-primary: rgb(84, 48, 24);
+    --color-icons-lines: #f8b92b;
+    --color-sky: #f5e8d8ff;
+    --color-sub: #1e3147;
     // --color-bg: #d1ffe8;
-    --color-bg: rgb(232, 234, 237);
-    --color-code: rgb(226, 228, 233);
-    --color-links: rgb(194 65 12);
+    --color-bg: #f8e6bf;
+    --color-code: #fcf3e6;
+    --color-links: #c1572f;
     // --color-bg: #c3f9c3;
     --color-low: #162dab;
     --color-high: #d11305;
@@ -47,11 +48,11 @@
     --pad-xlarge: 2rem;
     --pad-section: 3rem;
     --monospace: "Courier", "Courier New", monospace;
-    --font-xlarge: 2.5rem;
-    --font-large: 2rem;
-    --font-medium: 1.4rem;
+    --font-xlarge: 2rem;
+    --font-large: 1.55rem;
+    --font-medium: 1.15rem;
     --font-body: 1rem;
-    --font-small: 0.7rem;
+    --font-small: 0.6rem;
     --max-img-width: 1040px;
     --max-content-width: 50rem;
     --content-width: 80%;
@@ -61,6 +62,32 @@
     @include media(mobile) {
         --content-width: 100%;
     }
+}
+
+.svg_filter_green {
+    filter: invert(62%) sepia(32%) saturate(473%) hue-rotate(58deg)
+        brightness(90%) contrast(89%);
+}
+.svg_filter_golden,
+.icon {
+    filter: invert(77%) sepia(89%) saturate(1927%) hue-rotate(336deg)
+        brightness(102%) contrast(94%);
+}
+
+.svg_filter_blue {
+    filter: invert(18%) sepia(62%) saturate(499%) hue-rotate(175deg)
+        brightness(96%) contrast(88%);
+}
+
+.svg_color_red,
+battery-svg {
+    filter: invert(36%) sepia(87%) saturate(522%) hue-rotate(332deg)
+        brightness(95%) contrast(90%);
+}
+
+.svg_color_green_dark {
+    filter: invert(35%) sepia(20%) saturate(624%) hue-rotate(58deg)
+        brightness(91%) contrast(90%);
 }
 
 * {
@@ -73,7 +100,7 @@ html {
     // font-size: 20px;
     // font-family: sans-serif;
 
-    font-size: 16px;
+    font-size: var(--font-body);
     font-family: monospace;
 }
 
@@ -148,7 +175,7 @@ main {
 
 main,
 footer {
-    border-top: 2px solid var(--color-primary);
+    border-top: 2px solid var(--color-icons-lines);
 }
 
 .site-header,
@@ -211,18 +238,22 @@ a[title="Power"] {
     padding-top: 5px;
 }
 
-// hide battery level and icon when charging
+// hide battery icon when charging
 .battery-svg {
     display: none;
 }
 
-#level {
-    display: none;
+// always show battery level
+#battery-level {
+    display: inline-block;
+}
+#battery-level::after {
+    content: "%";
 }
 
 // otherwise hide sun icon and show batteries
 [data-charging="no"] {
-    border-top: 1px solid var(--color-primary);
+    border-top: 1px solid var(--color-icons-lines);
     padding-top: 7px;
     padding-right: 5px;
     .battery-svg {
@@ -232,12 +263,6 @@ a[title="Power"] {
     .sun-svg {
         display: none;
     }
-    #level {
-        display: inline-block;
-    }
-    #level::after {
-        content: "%";
-    }
 }
 
 /*---------------
@@ -246,13 +271,13 @@ ICONS AND SVG STYLING
 
 .svg_stroke {
     fill: none;
-    stroke: var(--color-primary);
+    stroke: var(--color-icons-lines);
     stroke-miterlimit: 10;
     stroke-width: 33px;
 }
 
 .svg_fill {
-    fill: var(--color-primary);
+    fill: var(--color-icons-lines);
 }
 
 a:hover {
@@ -306,11 +331,13 @@ nav {
             display: inline-block;
             &::before {
                 content: " | ";
+                color: var(--color-icons-lines);
             }
             &:first-child::before,
             &:last-child::before {
                 content: "";
             }
+            margin: 0px 0.5em 0 0;
         }
     }
     .category {
@@ -405,7 +432,7 @@ nav {
     right: 0;
     z-index: 300;
     padding: var(--pad);
-    border: 1px solid var(--color-primary);
+    border: 1px solid var(--color-icons-lines);
     .active-lang {
         font-style: italic;
     }
@@ -562,7 +589,7 @@ ARCHIVES
             border-bottom: none;
         }
         &:hover {
-            border-color: var(--color-primary);
+            border-color: var(--color-icons-lines);
         }
     }
     .category,
@@ -617,7 +644,7 @@ ARCHIVES
     letter-spacing: 1px;
     overflow: auto;
     color: var(--color-primary);
-    border: 1px solid var(--color-primary);
+    border: 1px solid var(--color-icons-lines);
     border-right: 0;
     border-left: 0;
     // margin-top: 1rem;
@@ -865,7 +892,7 @@ figure {
 }
 
 p.summary {
-    font-size: 1.5rem;
+    font-size: var(--font-medium);
     text-indent: 0;
     line-height: 1.2;
     // max-width: 28em;
@@ -878,7 +905,7 @@ p.translators {
 
 blockquote {
     margin: var(--pad-large) auto;
-    border: 1px solid var(--color-primary);
+    border: 1px solid var(--color-icons-lines);
     border-width: 2px 0;
     p {
         font-size: var(--font-medium);
@@ -890,7 +917,7 @@ blockquote {
 .longquote {
     margin: var(--pad-large);
     margin-bottom: 0;
-    border-left: 1px solid var(--color-primary);
+    border-left: 1px solid var(--color-icons-lines);
     padding-left: var(--pad-large);
     p {
         font-size: 0.9rem;
@@ -1021,7 +1048,7 @@ sub {
 }
 
 .ref {
-    border: 1px solid var(--color-primary);
+    border: 1px solid var(--color-icons-lines);
     padding: var(--pad);
     background: #fff;
     z-index: 10;
@@ -1062,7 +1089,7 @@ a.footnote-backref {
 }
 
 #related {
-    border-top: 2px solid var(--color-primary);
+    border-top: 2px solid var(--color-icons-lines);
 }
 
 /*------------------
@@ -1072,7 +1099,7 @@ ETC
 .button {
     display: block;
     padding: var(--pad);
-    border: 2px solid var(--color-primary);
+    border: 2px solid var(--color-icons-lines);
     border-width: 2px;
     text-align: center;
     margin: 1rem auto;
@@ -1205,7 +1232,7 @@ footer .weather_text {
     dt,
     dd {
         padding: var(--pad) 0;
-        border-bottom: 1px solid var(--color-primary);
+        border-bottom: 1px solid var(--color-icons-lines);
     }
     dt {
         width: 300px;
