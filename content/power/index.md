@@ -14,7 +14,7 @@ featured_image: "solar-powered-server-weather-2.png"
 This is a forecast for the coming days, updated daily:
 <p class="forecast"></p>
 
-This weather forecast is [powered by BrightSky](https://brightsky.dev/). 
+This weather forecast is [powered by BrightSky](https://brightsky.dev/).
 
 ## Power demand
 
@@ -26,18 +26,23 @@ These are live power statistics of the solar powered server:
 
 ## Battery meter
 
-TODO: UPDATE ALL OF THIS :)
+The background of the top of every page is a battery meter, designed to display the relationship of the energy powering the website and the visitor traffic consuming it.
 
-The background of the top of every page is a battery meter, designed to display the relationship of the energy powering the website and the visitor traffic consuming it. 
+The battery meter represents the **State of Charge (SOC) percentage** of our battery, calculated from voltage readings and calibrated to show actual energy storage capacity. This percentage is derived from sophisticated monitoring that combines data from our AXP20x power management system and INA228 current shunt sensor.
 
-The battery meter simply represents the voltage of our battery. For example, a storage capacity of 68% equals 12.68V, and a storage capacity of 8% equals 12.08V. The voltage reading is the "naked" data on which each battery meter relies to display a percentage. It doesn't always correlate with the energy storage capacity, because it's also influenced by the electric load (which lowers the voltage) and the solar insolation (which increases the voltage).
+The system intelligently distinguishes between charging and discharging states. When solar charging is active (indicated by a sun icon), the battery meter shows the charging status. When not charging, it displays the current SOC percentage with a battery icon. The background height dynamically adjusts to represent the remaining battery capacity.
 
-Because our load (the server) has a rather constant power use, during the day our battery meter reflects the local solar conditions. If the panel receives full sun, the voltage will raise above 13V, coloring the whole website in yellow. However, if it gets cloudy, the battery meter will decrease and the blue background is revealed. During the night, the battery meter reflects the storage capacity of the battery accurately. 
+Our monitoring system provides real-time data on:
 
-When the voltage of the battery drops below 12V, and the whole page is coloured in blue, the solar charge controller shuts down the system and the website goes offline. It will come back when the panel receives full sun again.
+- **Main battery SOC**: Primary energy storage percentage
+- **Backup battery SOC**: AXP20x battery capacity as backup
+- **Voltage readings**: Both shunt voltage and AXP20x battery voltage
+- **Current flow**: Real-time current draw and charging rates
+- **Power consumption**: System load power and input power
+- **Temperature**: CPU temperature and system load averages
 
-Showing a "correct" representation of the storage capacity requires calibration and algorithms in relation to a specific battery. This is troublesome, because we [keep experimenting with different sizes of batteries and solar panels]({{< ref "/posts/how-sustainable-is-a-solar-powered-website" >}}) to find the optimal balance between uptime and sustainability. Furthermore, the naked data are more informative for people who understand how a solar PV system works. For example, the battery meter also reveals the state and age of the battery.
+The battery meter serves as a live dashboard of our solar power system's health. During sunny periods, you'll see the charging indicator, while cloudy conditions or nighttime will show the actual storage percentage. The system automatically manages power states and provides comprehensive monitoring data for those interested in solar PV system operation.
 
-Since 12 January 2020, the website runs on a 30W solar panel and a (new) 168 Wh lead-acid battery. From September 2018 to January 2020, the website was powered by a 50W solar panel and an (old) 86 Wh battery. 
+Our current setup continues to evolve as we experiment with different battery and solar panel configurations to optimize the balance between uptime and sustainability. The monitoring system captures both the "naked" voltage data and processed SOC calculations, making it informative for both casual visitors and solar power enthusiasts.
 
-{{% figure src="solar_setup.jpg" %}} The accessibility of this website depends on the weather in Potrero Hill, San Francisco, CA. {{% /figure %}}
+{{% figure src="solar-setup.jpg" %}} The accessibility of this website depends on the weather in San Francisco, CA. {{% /figure %}}
