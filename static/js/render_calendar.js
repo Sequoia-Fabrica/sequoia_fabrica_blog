@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         // requires js/parse_calendar.js to be run as a cron job on the server
         // only runs intermittently (calendars don't change often) and is more efficient
-        events: '/calendar.json',
+        events: '/api/calendar.json',
         // the "cheater" way to render the calendar by just grabbing the ics stream
         // more power intensive as it will run on each page load
         // events: {
