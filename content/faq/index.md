@@ -25,13 +25,11 @@ featured_image: ""
 
 ## Where are you located?
 
-Sequoia Fabrica is located at 1736 18th Street in San Francisco’s Potrero Hill neighborhood. 
+Sequoia Fabrica is located at 1736 18th Street in San Francisco’s Potrero Hill neighborhood ([OpenStreetMap](https://www.openstreetmap.org/node/11571985859) or [Google Maps](https://maps.app.goo.gl/7fiutyz9KxsT1eXc7)).
 
 Our workshop is near several major bus lines (19, 22, 55), a bike lane (on 17th Street), and there is street parking in the neighborhood.
 
 Our facility is at sidewalk level, please enter through the glass double doors.
-
-Find us on [OpenStreetMap](https://www.openstreetmap.org/node/11571985859) or [Google Maps](https://maps.app.goo.gl/7fiutyz9KxsT1eXc7).
 
 ## How can I access the space?
 

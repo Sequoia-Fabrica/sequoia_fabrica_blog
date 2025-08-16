@@ -14,9 +14,11 @@ We are a volunteer-run 501(c)(3) non-profit, and host [classes, events and works
 
 We offer [memberships](/membership) for makers who want to access the space and equipment outside of classes. Want to teach a class or organize an event at our workshop? Please [contact us](/contact).
 
-{{% figure src="banner_1.jpg" %}} 
-Some of the lovely tools in our woodshop
-{{% /figure %}}
+## Upcoming <a href={{< param Events >}}>events</a> at Sequoia Fabrica:
+<div id="calendar">
+    <div id="calendar-view"></div>
+</div>
+
 
 {{< columns size=small >}}
 ## Visit and Learn a New Skill
@@ -41,9 +43,5 @@ Anyone involved in our space or events is expected to review and follow our [Cod
 
 {{</ columns >}}
 
-## Upcoming events at Sequoia Fabrica:
-<div id="calendar">
-    <div id="calendar-view"></div>
-</div>
 
 

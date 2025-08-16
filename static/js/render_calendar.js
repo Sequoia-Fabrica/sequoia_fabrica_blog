@@ -38,7 +38,7 @@ function renderEventContent(eventInfo) {
                 <span>
                     ${
                         isDayGridMonth
-                            ? truncateString(eventInfo.event.title, 12)
+                            ? truncateString(eventInfo.event.title, 14)
                             : eventInfo.event.title
                     }
                 </span>

@@ -54,7 +54,7 @@
     --font-body: 1rem;
     --font-small: 0.6rem;
     --max-img-width: 1040px;
-    --max-content-width: 50rem;
+    --max-content-width: 55rem;
     --content-width: 80%;
     @include media(tablet) {
         --content-width: 90%;
@@ -768,10 +768,10 @@ figure,
             text-align: left;
         }
         td {
-            border-bottom: 1px solid black;
+            border-bottom: 1px solid var(--color-icons-lines);
         }
         th {
-            border-bottom: 2px solid black;
+            border-bottom: 2px solid var(--color-icons-lines);
             font-weight: normal;
         }
         th:first-child,
@@ -1385,12 +1385,19 @@ Global Responsive Styles
     --background-end-rgb: 255, 255, 255;
 
     /* CSS For FullCalendar */
-    --fc-button-bg-color: #006951;
-    --fc-button-border-color: #006951;
-    --fc-button-hover-bg-color: #01a37e;
-    --fc-button-hover-border-color: #006951;
-    --fc-button-active-bg-color: #01a37e;
-    --fc-button-active-border-color: #006951;
+    .fc-button-primary {
+        color: var(--color-links);
+    }
+
+    --fc-border-color: var(--color-icons-lines);
+    --fc-event-border-color: var(--color-icons-lines);
+    --fc-button-bg-color: none;
+    --fc-button-border-color: none;
+    --fc-button-hover-bg-color: none;
+    --fc-button-text-color: var(--color-sub);
+    --fc-button-hover-border-color: var(--color-sub);
+    --fc-button-active-bg-color: none;
+    --fc-button-active-border-color: none;
 }
 
 @import "_print";
