@@ -3,9 +3,12 @@ const fs = require("fs");
 const path = require("path");
 const getWeather = require("./weather.js");
 const { getPowerInfo } = require("./powerinfo.js");
+const fetchAndParseICS = require('./parse_calendar.js')
 
-const STATS_FILE = "/var/www/html/api/stats.json";
-const LOG = true;
+const STATS_FILE = process.env.STATS_FILE || "/var/www/html/api/stats.json";
+const LOG = process.env.LOG || true;
+const ICS_URL = "http://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics"; // bookwhen public calendar url
+const CALENDAR_FILE = process.env.CALENDAR_FILE || "/var/www/html/api/calendar.json"
 
 async function writeFileAtomic(destPath, data) {
   const dir = path.dirname(destPath);
@@ -18,9 +21,10 @@ async function writeFileAtomic(destPath, data) {
 async function main() {
   try {
     // Fetch in parallel for speed
-    const [weatherData, powerData] = await Promise.all([
+    const [weatherData, powerData, calendarData] = await Promise.all([
       getWeather(),
       getPowerInfo(),
+      fetchAndParseICS(ICS_URL)
     ]);
 
     const statsObject = {
@@ -28,15 +32,20 @@ async function main() {
       ...weatherData, // today_icon, tomorrow_icon, temperatures, etc.
     };
 
-    const json = JSON.stringify(statsObject, null, 2);
-    await writeFileAtomic(STATS_FILE, json);
+    const statsJSON = JSON.stringify(statsObject);
+    await writeFileAtomic(STATS_FILE, statsJSON);
+    const calJSON = JSON.stringify(calendarData);
+    await writeFileAtomic(CALENDAR_FILE, calJSON);
 
     if (LOG) {
       console.log("Stats written to", STATS_FILE);
-      console.log(json);
+      console.log(statsJSON);
+
+      console.log("Calendar written to", CALENDAR_FILE);
+      console.log(calJSON);
     }
   } catch (err) {
-    console.error("getStats failed:", err && err.stack ? err.stack : err);
+    console.error("getStats/calendar failed:", err && err.stack ? err.stack : err);
     process.exitCode = 1;
   }
 }

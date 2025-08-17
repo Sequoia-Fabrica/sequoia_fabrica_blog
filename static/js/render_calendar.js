@@ -71,14 +71,16 @@ document.addEventListener("DOMContentLoaded", function () {
             center: "title",
             right: "next",
         },
-        // // TODO: switch to using /calendar.json once deployed
-        // // will require js/parse_calendar.js to be run as a cron job on the server
-        // events: '/calendar.json',
-        events: {
-            // TODO: templatize this
-            url: "https://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics",
-            format: "ics",
-        },
+        // requires js/parse_calendar.js to be run as a cron job on the server
+        // only runs intermittently (calendars don't change often) and is more efficient
+        events: '/api/calendar.json',
+        // the "cheater" way to render the calendar by just grabbing the ics stream
+        // more power intensive as it will run on each page load
+        // events: {
+        //     // TODO: templatize this
+        //     url: "https://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics",
+        //     format: "ics",
+        // },
         eventDisplay: "list-item",
         eventContent: renderEventContent,
         eventDidMount: function (ev) {
