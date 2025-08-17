@@ -51,14 +51,21 @@ function setupBatteryMeter(data) {
 
   const batteryElement = document.getElementById("battery");
   const indicatorElement = document.getElementById("battery_data");
-  const levelElement = document.getElementById("level");
+  const levelElement = document.getElementById("battery-level");
 
-  batteryElement.style.height = 100 - batteryLevel + "%";
-  indicatorElement.style.top = 100 - batteryLevel + "vh";
+  if (batteryElement) {
+    batteryElement.style.height = 100 - batteryLevel + "%";
+  }
 
-  if (isCharging) {
-    indicatorElement.setAttribute("data-charging", "yes");
-  } else {
+  if (indicatorElement) {
+    indicatorElement.style.top = 100 - batteryLevel + "vh";
+
+    if (isCharging) {
+      indicatorElement.setAttribute("data-charging", "yes");
+    }
+  }
+
+  if (levelElement && !isCharging) {
     levelElement.textContent = batteryLevel;
   }
 }
@@ -158,7 +165,7 @@ function populateDashboard(data) {
     ["Location", "San Francisco, CA"],
     ["Time", data.local_time || "—"],
     ["Battery status", batteryText],
-    ["Power used", powerUsed],
+    ["Power draw", powerUsed],
     ["Uptime", uptime],
   ];
 
