@@ -5,7 +5,7 @@ summary: "A truly stunning story of transformation against all odds"
 authors: ["Camille Teicheira"]
 categories: [""]
 tags: ["tag", "cats"]
-featured_image: "cinder-yawn.png"
+featured_image: "cinder_yawn.png"
 draft: false
 ---
 
