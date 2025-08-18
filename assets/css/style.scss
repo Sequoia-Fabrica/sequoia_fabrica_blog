@@ -221,8 +221,8 @@ BACKGROUND and BATTERY METER
     z-index: 100;
     font-size: 0.75rem;
     text-align: right;
-    padding: 3px 0.5rem 0 0;
     pointer-events: none;
+    margin-bottom: var(--pad-small);
 }
 
 a[title="Power"] {
@@ -253,9 +253,26 @@ a[title="Power"] {
 
 // otherwise hide sun icon and show batteries
 [data-charging="no"] {
-    border-top: 1px solid var(--color-icons-lines);
-    padding-top: 7px;
-    padding-right: 5px;
+    padding: var(--pad-small);
+    border: 2px solid var(--color-icons-lines);
+    border-radius: 3px;
+    background: var(--color-bg);
+    position: relative;
+    display: inline-block;
+
+    // Add battery terminal/nub
+    &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -4px;
+        transform: translateY(-50%);
+        width: 2px;
+        height: 6px;
+        background: var(--color-icons-lines);
+        border-radius: 0 1px 1px 0;
+    }
+
     .battery-svg {
         display: inline-block;
         width: 15px;
@@ -1292,14 +1309,20 @@ Global Responsive Styles
     //menu
     //show for other languages
     #menu-s span {
-        display: block;
+        display: inline-block;
         text-transform: uppercase;
         letter-spacing: 1px;
-        padding-top: 2px;
+        padding: 6px 12px 4px 12px;
+        border: 1px solid var(--color-icons-lines);
+        border-radius: 3px;
         &:hover {
             cursor: pointer;
             color: var(--color-sub);
+            border-color: var(--color-sub);
         }
+    }
+    nav#menu {
+        margin-top: var(--pad);
     }
     nav#menu > ul li {
         &::before {
@@ -1332,9 +1355,6 @@ Global Responsive Styles
     }
     html {
         font-size: 16px;
-    }
-    #menu-s span {
-        padding-top: 3px;
     }
     .cover {
         .image {
