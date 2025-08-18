@@ -1326,14 +1326,33 @@ Global Responsive Styles
             background: var(--color-bg);
             border: 2px solid var(--color-icons-lines);
             border-radius: 3px;
-            padding: var(--pad);
+            padding: 0;
             flex-direction: column;
-            gap: var(--pad-small);
+            gap: 0;
             z-index: 100;
             min-width: 200px;
+            overflow: hidden;
 
             &.show {
                 display: flex;
+            }
+
+            a {
+                padding: var(--pad) var(--pad-large);
+                margin: 0;
+
+                &:nth-child(odd) {
+                    background: rgba(248, 185, 43, 0.1);
+                }
+
+                &:nth-child(even) {
+                    background: rgba(248, 185, 43, 0.05);
+                }
+
+                &:hover {
+                    background: var(--color-icons-lines);
+                    color: var(--color-primary);
+                }
             }
 
             .menu-separator {
