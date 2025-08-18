@@ -53,19 +53,19 @@ function setupBatteryMeter(data) {
   const indicatorElement = document.getElementById("battery_data");
   const levelElement = document.getElementById("battery-level");
 
-  if (batteryElement) {
-    batteryElement.style.height = 100 - batteryLevel + "%";
-  }
+  // if (batteryElement) {
+  //   batteryElement.style.height = 100 - batteryLevel + "%";
+  // }
 
   if (indicatorElement) {
-    indicatorElement.style.top = 100 - batteryLevel + "vh";
+    // indicatorElement.style.top = 100 - batteryLevel + "vh";
 
-    if (isCharging) {
-      indicatorElement.setAttribute("data-charging", "yes");
-    }
+    // if (isCharging) {
+    //   indicatorElement.setAttribute("data-charging", "yes");
+    // }
   }
 
-  if (levelElement && !isCharging) {
+  if (levelElement) {
     levelElement.textContent = batteryLevel;
   }
 }
