@@ -1,6 +1,5 @@
 <header class="site-header">
   <!-- <h1><a id="top" href="/">{{ site.Title }}</a></h1> -->
-   {{ partial "battery" . }}
   <a id="top" href='/'>
     <img class="sf_logo svg_filter_green" src="/icons/seq_fab_logo_simplified.svg" type="image/svg+xml" alt="{{ site.Title }}"/>
   </a>
@@ -8,5 +7,6 @@
   <div class="subtitle"><a href='/power'>This is a solar powered website. It may go offline!</a></div>
 
   {{ partial "nav" . }}
+   {{ partial "battery" . }}
  
 </header>
