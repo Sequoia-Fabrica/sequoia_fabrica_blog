@@ -186,12 +186,20 @@ document.addEventListener("DOMContentLoaded", () => {
   loadJSON(STATS_URL);
 
   // Mobile menu toggle
-  const mobileMenuBtn = document.getElementById("m-btn");
-  const menuList = document.getElementById("menu-list");
+  const menuToggle = document.querySelector('.menu-toggle');
+  const menuItems = document.getElementById('menu-items');
 
-  if (mobileMenuBtn && menuList) {
-    mobileMenuBtn.addEventListener("click", () => {
-      menuList.classList.toggle("show");
+  if (menuToggle && menuItems) {
+    menuToggle.addEventListener('click', () => {
+      menuItems.classList.toggle('show');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (event) => {
+      const menu = document.querySelector('.mobile-menu');
+      if (menu && !menu.contains(event.target)) {
+        menuItems.classList.remove('show');
+      }
     });
   }
 
