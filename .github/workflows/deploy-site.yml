@@ -31,7 +31,7 @@ jobs:
 
       - name: Build the site
         # TODO: make --baseURL dynamic (a github env var?)
-        run: ./utils/build_site.sh --baseURL "https://sequoiafabrica.org" --outputDir "./built-site"
+        run: ./utils/build_site.sh --baseURL "//sequoia.garden" --outputDir "./built-site"
 
       - name: Check for build success
         run: |
@@ -39,6 +39,23 @@ jobs:
             echo "Build failed: 'built-site' directory not found"
             exit 1
           fi
+      # Connect to the SeqFab tailnet
+      - name: Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
 
-      # - name: SSH to server and rsync files
-      #   run: TODO
+      # rsync over changed files
+      - name: rsync deploy
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avzr --delete
+          path: built-site/
+          remote_path: /var/www/html/
+          remote_host: sol.cloudforest-perch.ts.net
+          remote_user: olimex
+          remote_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+
+      
