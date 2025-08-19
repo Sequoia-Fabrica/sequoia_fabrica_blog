@@ -53,19 +53,19 @@ function setupBatteryMeter(data) {
   const indicatorElement = document.getElementById("battery_data");
   const levelElement = document.getElementById("battery-level");
 
-  if (batteryElement) {
-    batteryElement.style.height = 100 - batteryLevel + "%";
-  }
+  // if (batteryElement) {
+  //   batteryElement.style.height = 100 - batteryLevel + "%";
+  // }
 
   if (indicatorElement) {
-    indicatorElement.style.top = 100 - batteryLevel + "vh";
+    // indicatorElement.style.top = 100 - batteryLevel + "vh";
 
-    if (isCharging) {
-      indicatorElement.setAttribute("data-charging", "yes");
-    }
+    // if (isCharging) {
+    //   indicatorElement.setAttribute("data-charging", "yes");
+    // }
   }
 
-  if (levelElement && !isCharging) {
+  if (levelElement) {
     levelElement.textContent = batteryLevel;
   }
 }
@@ -186,12 +186,20 @@ document.addEventListener("DOMContentLoaded", () => {
   loadJSON(STATS_URL);
 
   // Mobile menu toggle
-  const mobileMenuBtn = document.getElementById("m-btn");
-  const menuList = document.getElementById("menu-list");
+  const menuToggle = document.querySelector('.menu-toggle');
+  const menuItems = document.getElementById('menu-items');
 
-  if (mobileMenuBtn && menuList) {
-    mobileMenuBtn.addEventListener("click", () => {
-      menuList.classList.toggle("show");
+  if (menuToggle && menuItems) {
+    menuToggle.addEventListener('click', () => {
+      menuItems.classList.toggle('show');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (event) => {
+      const menu = document.querySelector('.mobile-menu');
+      if (menu && !menu.contains(event.target)) {
+        menuItems.classList.remove('show');
+      }
     });
   }
 

@@ -6,6 +6,10 @@
   <div class="subtitle">{{ .Site.Params.description }}</div>
   <div class="subtitle"><a href='/power'>This is a solar powered website. It may go offline!</a></div>
 
+<div class="nav-status-bar">
   {{ partial "nav" . }}
- 
+  <div class="battery-widget">
+    {{ partial "battery" . }}
+  </div>
+</div>
 </header>

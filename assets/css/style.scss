@@ -173,7 +173,6 @@ main {
     margin-bottom: var(--pad-large);
 }
 
-main,
 footer {
     border-top: 2px solid var(--color-icons-lines);
 }
@@ -193,7 +192,6 @@ footer {
 }
 
 .sf_logo {
-    width: 600px;
     margin: 0 auto;
     display: inline-block;
 }
@@ -202,26 +200,12 @@ footer {
 BACKGROUND and BATTERY METER
 ---------------------*/
 
-.battery_bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
 #battery {
     background: var(--color-sky);
 }
 
 #battery_data {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    z-index: 100;
     font-size: 0.75rem;
-    text-align: right;
-    padding: 3px 0.5rem 0 0;
     pointer-events: none;
 }
 
@@ -253,9 +237,26 @@ a[title="Power"] {
 
 // otherwise hide sun icon and show batteries
 [data-charging="no"] {
-    border-top: 1px solid var(--color-icons-lines);
-    padding-top: 7px;
-    padding-right: 5px;
+    padding: var(--pad-small);
+    border: 2px solid var(--color-icons-lines);
+    border-radius: 3px;
+    background: var(--color-bg);
+    position: relative;
+    display: inline-block;
+
+    // Add battery terminal/nub
+    &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -4px;
+        transform: translateY(-50%);
+        width: 2px;
+        height: 6px;
+        background: var(--color-icons-lines);
+        border-radius: 0 1px 1px 0;
+    }
+
     .battery-svg {
         display: inline-block;
         width: 15px;
@@ -315,44 +316,65 @@ li.obsolete-technology .category,
 }
 
 /*-----------
-NAVIGATION
+NAVIGATION & STATUS BAR
 -----------*/
 
-#menu-s > span {
-    display: none;
+.nav-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: var(--pad) 0;
+    padding-bottom: var(--pad);
+    border-bottom: 2px solid var(--color-icons-lines);
 }
 
-nav {
-    a {
-        border-bottom: none;
-    }
-    &#menu > ul {
-        li {
-            display: inline-block;
-            &::before {
-                content: " | ";
-                color: var(--color-icons-lines);
-            }
-            &:first-child::before,
-            &:last-child::before {
-                content: "";
-            }
-            margin: 0px 0.5em 0 0;
-        }
-    }
-    .category {
-        margin: 0;
-        display: inline-block;
-    }
-    .icon {
-        top: 4px;
-    }
-    width: 100%;
+/* Mobile-friendly expanding menu */
+.mobile-menu {
     position: relative;
 
-    .rss {
-        margin-left: var(--pad-small);
+    .menu-toggle {
+        display: none;
+        background: none;
+        border: 2px solid var(--color-icons-lines);
+        border-radius: 3px;
+        padding: 6px 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: inherit;
+        color: var(--color-primary);
+
+        &:hover {
+            color: var(--color-sub);
+            border-color: var(--color-sub);
+        }
     }
+
+    .menu-items {
+        display: flex;
+        gap: var(--pad);
+
+        a {
+            border-bottom: none;
+            color: var(--color-primary);
+            text-decoration: none;
+
+            &:hover {
+                color: var(--color-sub);
+            }
+        }
+
+        .menu-separator {
+            color: var(--color-icons-lines);
+        }
+    }
+}
+
+/* Battery status widget */
+.battery-widget {
+    font-size: 0.75rem;
 }
 
 // #menu-list .rss {
@@ -1289,38 +1311,54 @@ Global Responsive Styles
             grid-column: span 2;
         }
     }
-    //menu
-    //show for other languages
-    #menu-s span {
-        display: block;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding-top: 2px;
-        &:hover {
-            cursor: pointer;
-            color: var(--color-sub);
+
+    /* Mobile menu behavior */
+    .mobile-menu {
+        .menu-toggle {
+            display: block;
         }
-    }
-    nav#menu > ul li {
-        &::before {
-            content: "";
+
+        .menu-items {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--color-bg);
+            border: 2px solid var(--color-icons-lines);
+            border-radius: 3px;
+            padding: 0;
+            flex-direction: column;
+            gap: 0;
+            z-index: 100;
+            min-width: 200px;
+            overflow: hidden;
+
+            &.show {
+                display: flex;
+            }
+
+            a {
+                padding: var(--pad) var(--pad-large);
+                margin: 0;
+
+                &:nth-child(odd) {
+                    background: rgba(248, 185, 43, 0.1);
+                }
+
+                &:nth-child(even) {
+                    background: rgba(248, 185, 43, 0.05);
+                }
+
+                &:hover {
+                    background: var(--color-icons-lines);
+                    color: var(--color-primary);
+                }
+            }
+
+            .menu-separator {
+                display: none;
+            }
         }
-        display: block;
-        margin: 0 var(--pad) 0 0;
-    }
-    #menu-list {
-        height: 0;
-        padding-left: 26px;
-        overflow: hidden;
-        transition: height 300ms ease-in-out;
-        &.show {
-            height: 100%;
-        }
-        // .rss {
-        //     position: relative;
-        //     top: 0px;
-        //     left: -2px;
-        // }
     }
 }
 
@@ -1332,9 +1370,6 @@ Global Responsive Styles
     }
     html {
         font-size: 16px;
-    }
-    #menu-s span {
-        padding-top: 3px;
     }
     .cover {
         .image {
