@@ -1,0 +1,393 @@
+# Pages CMS Configuration for Sequoia Fabrica Hugo Site
+# Based on https://pagescms.org/docs/configuration/
+
+# Media configuration
+media:
+  - name: post-images
+    label: Post Images
+    input: content/posts
+    output: /posts
+    path: content/posts
+    categories: [image]
+    extensions: [png, jpg, jpeg, gif, svg, webp]
+  - name: icons
+    label: Icons
+    input: static/icons
+    output: /icons
+    path: static/icons
+    extensions: [svg, png, jpg, jpeg]
+
+# Content configuration
+content:
+  # Blog posts collection
+  - name: posts
+    label: Blog Posts
+    type: collection
+    path: content/posts
+    format: yaml-frontmatter
+    filename: "{year}-{month}-{day}-{title}.md"
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+        primary: true
+      - name: date
+        label: Date
+        type: date
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+        description: "Brief description of the post"
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+        description: "List of author names"
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+        description: "Tags for categorizing the post"
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+        description: "Post categories"
+      - name: featured_image
+        label: Featured Image
+        type: image
+        description: "Main image for the post"
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+        description: "Main post content"
+    view:
+      fields: [title, date, authors, tags, categories, draft]
+      primary: title
+      sort: [date, title]
+      search: [title, summary, authors, tags, categories]
+      filters:
+        - field: draft
+          label: Draft Status
+        - field: categories
+          label: Categories
+        - field: tags
+          label: Tags
+
+  # About page
+  - name: about
+    label: About Page
+    type: file
+    path: content/about/index.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: featured_image
+        label: Featured Image
+        type: image
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+
+  # Membership page
+  - name: membership
+    label: Membership Page
+    type: file
+    path: content/membership/index.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: featured_image
+        label: Featured Image
+        type: image
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+
+  # Contact page
+  - name: contact
+    label: Contact Page
+    type: file
+    path: content/contact/index.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: featured_image
+        label: Featured Image
+        type: image
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+
+  # FAQ page
+  - name: faq
+    label: FAQ Page
+    type: file
+    path: content/faq/index.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: featured_image
+        label: Featured Image
+        type: image
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+
+  # Partner page
+  - name: partner
+    label: Partner Page
+    type: file
+    path: content/partner/index.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: featured_image
+        label: Featured Image
+        type: image
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+
+  # Power page
+  - name: power
+    label: Power Page
+    type: file
+    path: content/power/index.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: summary
+        label: Summary
+        type: text
+      - name: authors
+        label: Authors
+        type: string
+        list: true
+      - name: categories
+        label: Categories
+        type: string
+        list: true
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+      - name: featured_image
+        label: Featured Image
+        type: image
+        options:
+          media: post-images
+      - name: body
+        label: Content
+        type: rich-text
+        required: true
+
+# Components for reusable field groups
+components:
+  seo_fields:
+    label: SEO Fields
+    fields:
+      - name: meta_title
+        label: Meta Title
+        type: string
+        description: "SEO title (if different from main title)"
+      - name: meta_description
+        label: Meta Description
+        type: text
+        description: "SEO description for search engines"
+      - name: meta_keywords
+        label: Meta Keywords
+        type: string
+        list: true
+        description: "SEO keywords"
+      - name: og_image
+        label: Open Graph Image
+        type: image
+        description: "Image for social media sharing"
+        options:
+          media: post-images
+
+  page_settings:
+    label: Page Settings
+    fields:
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+        default: false
+        description: "Hide from navigation and search"
+      - name: draft
+        label: Draft
+        type: boolean
+        default: false
+        description: "Mark as draft (won't be published)"
+
+# Global settings
+settings:
+  content:
+    merge: true
+  hide: false
