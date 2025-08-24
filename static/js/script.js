@@ -30,34 +30,44 @@ function createSparklineSVG(data, width = 100, height = 20) {
   if (!data || data.length < 2) {
     // Show placeholder dots when no data
     return `<svg width="${width}" height="${height}" class="sparkline sparkline-loading" viewBox="0 0 ${width} ${height}">
-      <circle cx="20" cy="${height/2}" r="1" fill="currentColor" opacity="0.3"/>
-      <circle cx="40" cy="${height/2}" r="1" fill="currentColor" opacity="0.4"/>
-      <circle cx="60" cy="${height/2}" r="1" fill="currentColor" opacity="0.5"/>
-      <circle cx="80" cy="${height/2}" r="1" fill="currentColor" opacity="0.4"/>
+      <circle cx="20" cy="${
+        height / 2
+      }" r="1" fill="currentColor" opacity="0.3"/>
+      <circle cx="40" cy="${
+        height / 2
+      }" r="1" fill="currentColor" opacity="0.4"/>
+      <circle cx="60" cy="${
+        height / 2
+      }" r="1" fill="currentColor" opacity="0.5"/>
+      <circle cx="80" cy="${
+        height / 2
+      }" r="1" fill="currentColor" opacity="0.4"/>
     </svg>`;
   }
-  
+
   if (data.length === 1) {
     // Show single point as a dot
     return `<svg width="${width}" height="${height}" class="sparkline sparkline-single" viewBox="0 0 ${width} ${height}">
-      <circle cx="${width/2}" cy="${height/2}" r="2" fill="currentColor" opacity="0.6"/>
+      <circle cx="${width / 2}" cy="${
+        height / 2
+      }" r="2" fill="currentColor" opacity="0.6"/>
     </svg>`;
   }
-  
+
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1; // Avoid division by zero
-  
+
   const xStep = width / (data.length - 1);
-  
+
   let pathData = `M 0,${height - ((data[0] - min) / range) * height}`;
-  
+
   for (let i = 1; i < data.length; i++) {
     const x = i * xStep;
     const y = height - ((data[i] - min) / range) * height;
     pathData += ` L ${x},${y}`;
   }
-  
+
   return `<svg width="${width}" height="${height}" class="sparkline" viewBox="0 0 ${width} ${height}">
     <path d="${pathData}" stroke="currentColor" fill="none" stroke-width="1"/>
   </svg>`;
@@ -82,21 +92,18 @@ async function loadJSON(url) {
 }
 
 function setupBatteryMeter(data) {
-  const batteryLevel = clamp(safeInt(data.soc_pct || data.charge), 0, 100); // fallback to legacy 'charge'
+  const batteryLevel = clamp(safeInt(data.soc_pct), 0, 100);
 
   const batteryElement = document.getElementById("battery");
   const indicatorElement = document.getElementById("battery_data");
   const levelElement = document.getElementById("battery-level");
 
-  // if (batteryElement) {
-  //   batteryElement.style.height = 100 - batteryLevel + "%";
-  // }
+  if (batteryElement) {
+    batteryElement.style.height = 100 - batteryLevel + "%";
+  }
 
   if (indicatorElement) {
-    // indicatorElement.style.top = 100 - batteryLevel + "vh";
-    // if (isCharging) {
-    //   indicatorElement.setAttribute("data-charging", "yes");
-    // }
+    indicatorElement.style.top = 100 - batteryLevel + "vh";
   }
 
   if (levelElement) {
@@ -121,31 +128,43 @@ function populateData(data) {
   const stats = [
     ["Local time", data.local_time || "—"],
     ["Uptime", data.uptime || "—"],
-    ["Power usage", formatUnit(loadW, "W") + createSparklineSVG(sparklines.powerUsage)],
-    ["Current draw (est.)", 
-      (isPresent(loadA) ? formatUnit(loadA, "A", 3) : "—") + 
-      (isPresent(loadA) ? createSparklineSVG(sparklines.currentDraw) : "")
+    [
+      "Power usage",
+      formatUnit(loadW, "W") + createSparklineSVG(sparklines.powerUsage),
     ],
-    ["Voltage (battery bus)", formatUnit(battV, "V") + createSparklineSVG(sparklines.voltage)],
+    [
+      "Current draw (est.)",
+      (isPresent(loadA) ? formatUnit(loadA, "A", 3) : "—") +
+        (isPresent(loadA) ? createSparklineSVG(sparklines.currentDraw) : ""),
+    ],
+    [
+      "Voltage (battery bus)",
+      formatUnit(battV, "V") + createSparklineSVG(sparklines.voltage),
+    ],
     [
       "CPU temperature",
-      (isPresent(data.fmt.cpu.temp) ? `${data.fmt.cpu.temp}` : "—") + 
-      (isPresent(cpuTemp) ? createSparklineSVG(sparklines.cpuTemp) : "")
+      (isPresent(data.fmt.cpu.temp) ? `${data.fmt.cpu.temp}` : "—") +
+        (isPresent(cpuTemp) ? createSparklineSVG(sparklines.cpuTemp) : ""),
     ],
     [
       "CPU load average *",
-      (isPresent(data.fmt.cpu.load_15min) ? `${data.fmt.cpu.load_15min}%` : "—") +
-      (isPresent(cpuLoad) ? createSparklineSVG(sparklines.cpuLoad) : "")
+      (isPresent(data.fmt.cpu.load_15min)
+        ? `${data.fmt.cpu.load_15min}%`
+        : "—") +
+        (isPresent(cpuLoad) ? createSparklineSVG(sparklines.cpuLoad) : ""),
     ],
     ["Status", data.fmt.status],
-    ["Main battery SOC", 
+    [
+      "Main battery SOC",
       (isPresent(data.fmt.soc) ? `${data.fmt.soc}` : "—") +
-      (socPct ? createSparklineSVG(sparklines.mainBattery) : "")
+        (socPct ? createSparklineSVG(sparklines.mainBattery) : ""),
     ],
     [
       "Backup battery SOC",
-      (isPresent(data.fmt.axp_batt.capacity) ? `${data.fmt.axp_batt.capacity}` : "—") +
-      (backupSoc ? createSparklineSVG(sparklines.backupBattery) : "")
+      (isPresent(data.fmt.axp_batt.capacity)
+        ? `${data.fmt.axp_batt.capacity}`
+        : "—") +
+        (backupSoc ? createSparklineSVG(sparklines.backupBattery) : ""),
     ],
   ];
 
@@ -194,8 +213,7 @@ function populateForecast(data) {
 }
 
 function populateDashboard(data) {
-  const isCharging = inferCharging(data);
-  const batteryText = isCharging ? "charging" : `${data.fmt.soc}, not charging`;
+  const batteryText = data.fmt.status || data.fmt.soc || "—";
 
   // Get power usage from available sources, prioritize load_W
   let powerUsed = data.load_W || data.p_in_W || data.W;
@@ -231,7 +249,7 @@ function createDefinitionList(pairs) {
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
   loadJSON(STATS_URL);
-  
+
   // Set up automatic refresh for power page only
   if (window.location.pathname.includes("/power/")) {
     setInterval(() => {

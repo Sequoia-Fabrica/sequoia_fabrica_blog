@@ -145,12 +145,12 @@ async function getSparklineDataFromLog() {
 
     const now = msNow();
     const cutoffTime = now - SPARKLINE_WINDOW_MS;
-    
+
     // Read recent data from JSONL file
     const stat = await fsp.stat(SHUNT_LOG_PATH);
     const readSize = Math.min(stat.size, 1024 * 1024); // Read last 1MB max
     const start = Math.max(0, stat.size - readSize);
-    
+
     const fd = await fsp.open(SHUNT_LOG_PATH, "r");
     let buffer;
     try {
@@ -166,50 +166,60 @@ async function getSparklineDataFromLog() {
 
     const lines = buffer.toString("utf8").trim().split("\n").filter(Boolean);
     const buckets = new Map();
-    
+
     // Process JSONL lines into time buckets
     for (const line of lines) {
       try {
         const entry = JSON.parse(line);
         const timestamp = entry.ts ? Date.parse(entry.ts) : null;
-        
+
         if (!timestamp || timestamp < cutoffTime) continue;
-        
-        const bucketTime = Math.floor(timestamp / SPARKLINE_BUCKET_MS) * SPARKLINE_BUCKET_MS;
-        
+
+        const bucketTime =
+          Math.floor(timestamp / SPARKLINE_BUCKET_MS) * SPARKLINE_BUCKET_MS;
+
         if (!buckets.has(bucketTime)) {
           buckets.set(bucketTime, {
             count: 0,
-            sums: { v: 0, i: 0, p: 0, soc: 0 }
+            sums: { v: 0, i: 0, p: 0, soc: 0 },
           });
         }
-        
+
         const bucket = buckets.get(bucketTime);
         bucket.sums.v += safeFloat(entry.v, 1) || 0;
         bucket.sums.i += safeFloat(entry.i, 1000) || 0; // mA to A
         bucket.sums.p += safeFloat(entry.p, 1000) || 0; // mW to W
-        bucket.sums.soc += (typeof entry.soc === 'number') ? entry.soc * 100 : 0; // to percentage
+        bucket.sums.soc += typeof entry.soc === "number" ? entry.soc * 100 : 0; // to percentage
         bucket.count++;
       } catch (e) {
         continue; // Skip malformed entries
       }
     }
-    
+
     // Convert to sparkline format
-    const sortedBuckets = Array.from(buckets.entries()).sort((a, b) => a[0] - b[0]);
-    
+    const sortedBuckets = Array.from(buckets.entries()).sort(
+      (a, b) => a[0] - b[0]
+    );
+
     return {
       timestamps: sortedBuckets.map(([time]) => time),
-      voltage: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? bucket.sums.v / bucket.count : 0),
-      currentDraw: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0),
-      powerUsage: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? Math.abs(bucket.sums.p) / bucket.count : 0),
-      mainBattery: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? bucket.sums.soc / bucket.count : 0),
+      voltage: sortedBuckets.map(([, bucket]) =>
+        bucket.count > 0 ? bucket.sums.v / bucket.count : 0
+      ),
+      currentDraw: sortedBuckets.map(([, bucket]) =>
+        bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0
+      ),
+      powerUsage: sortedBuckets.map(([, bucket]) =>
+        bucket.count > 0 ? Math.abs(bucket.sums.p) / bucket.count : 0
+      ),
+      mainBattery: sortedBuckets.map(([, bucket]) =>
+        bucket.count > 0 ? bucket.sums.soc / bucket.count : 0
+      ),
       // These come from system monitoring, not ESP log
       cpuTemp: [],
       cpuLoad: [],
-      backupBattery: []
+      backupBattery: [],
     };
-    
   } catch (error) {
     console.warn("Failed to analyze ESP log for sparklines:", error.message);
     return createEmptySparklineData();
@@ -225,7 +235,7 @@ function createEmptySparklineData() {
     mainBattery: [],
     cpuTemp: [],
     cpuLoad: [],
-    backupBattery: []
+    backupBattery: [],
   };
 }
 
@@ -284,116 +294,118 @@ async function getPowerInfo() {
 
     status = shunt.status; // charging|discharging|idle|unknown
 
-  // Compute system load
-  // If shunt is present and fresh enough → p_load = p_in - p_shunt
-  // If shunt missing/stale but adapter online → best-effort p_load = p_in
-  // If off-grid (no adapter) and shunt present → p_load ≈ -p_shunt
-  const shuntFresh =
-    shunt_stale_ms === null || shunt_stale_ms < SHUNT_MAX_AGE_MS;
-  let p_load_W = null;
+    // Compute system load
+    // If shunt is present and fresh enough → p_load = p_in - p_shunt
+    // If shunt missing/stale but adapter online → best-effort p_load = p_in
+    // If off-grid (no adapter) and shunt present → p_load ≈ -p_shunt
+    const shuntFresh =
+      shunt_stale_ms === null || shunt_stale_ms < SHUNT_MAX_AGE_MS;
+    let p_load_W = null;
 
-  if (shunt && shuntFresh) {
-    p_load_W = p_in_W - shunt_W;
-  } else if (p_in_W > 0.5) {
-    p_load_W = p_in_W;
-  } else if (shunt) {
-    p_load_W = -shunt_W;
+    if (shunt && shuntFresh) {
+      p_load_W = p_in_W - shunt_W;
+    } else if (p_in_W > 0.5) {
+      p_load_W = p_in_W;
+    } else if (shunt) {
+      p_load_W = -shunt_W;
+    }
+
+    // Render-friendly fields
+    const out = {
+      // meta
+      local_time: new Date().toLocaleString(),
+      gen_ms: msNow() - t0,
+      uptime: uptimeFormatted,
+
+      // CPU information
+      cpu_temp_c: cpuTemp,
+      cpu_load_1min: cpuLoadAvg[0],
+      cpu_load_5min: cpuLoadAvg[1],
+      cpu_load_15min: cpuLoadAvg[2],
+
+      // adapter input (AC)
+      ac_V: ac.V,
+      ac_A: ac.A,
+      ac_W: ac.P,
+      p_in_W,
+
+      // AXP20x battery
+      axp_batt_V: axpBattery.V,
+      axp_batt_A: axpBattery.A,
+      axp_batt_W: axpBattery.P,
+      axp_batt_capacity: axpBattery.capacity,
+
+      // shunt readings
+      shunt_V,
+      shunt_A,
+      shunt_W,
+      soc_pct: soc === null ? null : Math.round(soc * 100),
+      status, // charging|discharging|idle|unknown
+      shunt_ts,
+      shunt_stale_ms,
+
+      // derived system load
+      load_W: p_load_W,
+    };
+
+    // Get sparkline data from ESP logger and add CPU/system data
+    const sparklines = await getSparklineDataFromLog();
+
+    // Add system monitoring data that's not in ESP logs
+    // For now, these will be empty arrays since we don't have historical CPU data
+    // You could extend this to sample and store CPU data over time if needed
+    sparklines.cpuTemp = [];
+    sparklines.cpuLoad = [];
+    sparklines.backupBattery = [];
+
+    out.sparklines = sparklines;
+
+    // Also provide formatted strings for templates that want ready-to-print values
+    out.fmt = {
+      cpu: {
+        temp: cpuTemp === null ? "—" : `${fmt(cpuTemp, 1)}°C`,
+        load_1min: fmt(cpuLoadAvg[0], 2),
+        load_5min: fmt(cpuLoadAvg[1], 2),
+        load_15min: fmt(cpuLoadAvg[2], 2),
+      },
+      ac: { V: fmt(out.ac_V), A: fmt(out.ac_A, 3), W: fmt(out.ac_W) },
+      in_W: fmt(out.p_in_W),
+      axp_batt: {
+        V: fmt(out.axp_batt_V, 3),
+        A: fmt(out.axp_batt_A, 3),
+        W:
+          out.axp_batt_W >= 0 ? `+${fmt(out.axp_batt_W)}` : fmt(out.axp_batt_W),
+        capacity:
+          out.axp_batt_capacity == null
+            ? "—"
+            : `${Math.round(out.axp_batt_capacity)}%`,
+      },
+      shunt: {
+        V: fmt(out.shunt_V, 3),
+        A: fmt(out.shunt_A, 3),
+        W: out.shunt_W >= 0 ? `+${fmt(out.shunt_W)}` : fmt(out.shunt_W),
+      },
+      load_W: out.load_W == null ? "—" : fmt(out.load_W),
+      soc: out.soc_pct == null ? "—" : `${out.soc_pct}%`,
+      status: out.status,
+    };
+
+    return out;
   }
 
-  // Render-friendly fields
-  const out = {
-    // meta
-    local_time: new Date().toLocaleString(),
-    gen_ms: msNow() - t0,
-    uptime: uptimeFormatted,
+  // Helper function to format uptime in a human-readable format
+  function formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
 
-    // CPU information
-    cpu_temp_c: cpuTemp,
-    cpu_load_1min: cpuLoadAvg[0],
-    cpu_load_5min: cpuLoadAvg[1],
-    cpu_load_15min: cpuLoadAvg[2],
-
-    // adapter input (AC)
-    ac_V: ac.V,
-    ac_A: ac.A,
-    ac_W: ac.P,
-    p_in_W,
-
-    // AXP20x battery
-    axp_batt_V: axpBattery.V,
-    axp_batt_A: axpBattery.A,
-    axp_batt_W: axpBattery.P,
-    axp_batt_capacity: axpBattery.capacity,
-
-    // shunt readings
-    shunt_V,
-    shunt_A,
-    shunt_W,
-    soc_pct: soc === null ? null : Math.round(soc * 100),
-    status, // charging|discharging|idle|unknown
-    shunt_ts,
-    shunt_stale_ms,
-
-    // derived system load
-    load_W: p_load_W,
-  };
-
-  // Get sparkline data from ESP logger and add CPU/system data
-  const sparklines = await getSparklineDataFromLog();
-  
-  // Add system monitoring data that's not in ESP logs
-  // For now, these will be empty arrays since we don't have historical CPU data
-  // You could extend this to sample and store CPU data over time if needed
-  sparklines.cpuTemp = [];
-  sparklines.cpuLoad = [];
-  sparklines.backupBattery = [];
-  
-  out.sparklines = sparklines;
-
-  // Also provide formatted strings for templates that want ready-to-print values
-  out.fmt = {
-    cpu: {
-      temp: cpuTemp === null ? "—" : `${fmt(cpuTemp, 1)}°C`,
-      load_1min: fmt(cpuLoadAvg[0], 2),
-      load_5min: fmt(cpuLoadAvg[1], 2),
-      load_15min: fmt(cpuLoadAvg[2], 2),
-    },
-    ac: { V: fmt(out.ac_V), A: fmt(out.ac_A, 3), W: fmt(out.ac_W) },
-    in_W: fmt(out.p_in_W),
-    axp_batt: {
-      V: fmt(out.axp_batt_V, 3),
-      A: fmt(out.axp_batt_A, 3),
-      W: out.axp_batt_W >= 0 ? `+${fmt(out.axp_batt_W)}` : fmt(out.axp_batt_W),
-      capacity:
-        out.axp_batt_capacity == null
-          ? "—"
-          : `${Math.round(out.axp_batt_capacity)}%`,
-    },
-    shunt: {
-      V: fmt(out.shunt_V, 3),
-      A: fmt(out.shunt_A, 3),
-      W: out.shunt_W >= 0 ? `+${fmt(out.shunt_W)}` : fmt(out.shunt_W),
-    },
-    load_W: out.load_W == null ? "—" : fmt(out.load_W),
-    soc: out.soc_pct == null ? "—" : `${out.soc_pct}%`,
-    status: out.status,
-  };
-
-  return out;
-}
-
-// Helper function to format uptime in a human-readable format
-function formatUptime(seconds) {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
   }
 }
 
