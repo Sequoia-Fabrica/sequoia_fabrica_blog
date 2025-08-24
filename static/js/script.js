@@ -3,6 +3,8 @@
 const STATS_URL = "/api/stats.json";
 // const STATS_URL = "http://localhost:8000/stats.json";
 
+// No longer need client-side storage - using server-provided sparkline data
+
 // -- Utility functions --
 const safeInt = (value, defaultValue = 0) => {
   const parsed = parseInt(value, 10);
@@ -22,9 +24,44 @@ const formatUnit = (value, unit, decimals = 2) => {
   return Number.isFinite(value) ? `${value.toFixed(decimals)}${unit}` : "—";
 };
 
-const inferCharging = (data) => {
-  return data.fmt.status === "charging";
-};
+// Sparkline utility functions
+
+function createSparklineSVG(data, width = 100, height = 20) {
+  if (!data || data.length < 2) {
+    // Show placeholder dots when no data
+    return `<svg width="${width}" height="${height}" class="sparkline sparkline-loading" viewBox="0 0 ${width} ${height}">
+      <circle cx="20" cy="${height/2}" r="1" fill="currentColor" opacity="0.3"/>
+      <circle cx="40" cy="${height/2}" r="1" fill="currentColor" opacity="0.4"/>
+      <circle cx="60" cy="${height/2}" r="1" fill="currentColor" opacity="0.5"/>
+      <circle cx="80" cy="${height/2}" r="1" fill="currentColor" opacity="0.4"/>
+    </svg>`;
+  }
+  
+  if (data.length === 1) {
+    // Show single point as a dot
+    return `<svg width="${width}" height="${height}" class="sparkline sparkline-single" viewBox="0 0 ${width} ${height}">
+      <circle cx="${width/2}" cy="${height/2}" r="2" fill="currentColor" opacity="0.6"/>
+    </svg>`;
+  }
+  
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1; // Avoid division by zero
+  
+  const xStep = width / (data.length - 1);
+  
+  let pathData = `M 0,${height - ((data[0] - min) / range) * height}`;
+  
+  for (let i = 1; i < data.length; i++) {
+    const x = i * xStep;
+    const y = height - ((data[i] - min) / range) * height;
+    pathData += ` L ${x},${y}`;
+  }
+  
+  return `<svg width="${width}" height="${height}" class="sparkline" viewBox="0 0 ${width} ${height}">
+    <path d="${pathData}" stroke="currentColor" fill="none" stroke-width="1"/>
+  </svg>`;
+}
 
 // -- Main functions --
 async function loadJSON(url) {
@@ -47,8 +84,6 @@ async function loadJSON(url) {
 function setupBatteryMeter(data) {
   const batteryLevel = clamp(safeInt(data.soc_pct || data.charge), 0, 100); // fallback to legacy 'charge'
 
-  const isCharging = inferCharging(data);
-
   const batteryElement = document.getElementById("battery");
   const indicatorElement = document.getElementById("battery_data");
   const levelElement = document.getElementById("battery-level");
@@ -59,7 +94,6 @@ function setupBatteryMeter(data) {
 
   if (indicatorElement) {
     // indicatorElement.style.top = 100 - batteryLevel + "vh";
-
     // if (isCharging) {
     //   indicatorElement.setAttribute("data-charging", "yes");
     // }
@@ -77,28 +111,41 @@ function populateData(data) {
     safeNumber(data.shunt_V) || safeNumber(data.batt_V) || safeNumber(data.V);
   const loadA = battV > 0 ? loadW / battV : null;
   const socPct = safeInt(data.soc_pct) || safeInt(data.charge);
+  const cpuTemp = data.cpu_temp_c;
+  const cpuLoad = data.cpu_load_15min;
+  const backupSoc = safeNumber(data.axp_batt_capacity);
+
+  // Get sparkline data from API response
+  const sparklines = data.sparklines || {};
 
   const stats = [
     ["Local time", data.local_time || "—"],
     ["Uptime", data.uptime || "—"],
-    ["Power usage", formatUnit(loadW, "W")],
-    ["Current draw (est.)", isPresent(loadA) ? formatUnit(loadA, "A", 3) : "—"],
-    ["Voltage (battery bus)", formatUnit(battV, "V")],
+    ["Power usage", formatUnit(loadW, "W") + createSparklineSVG(sparklines.powerUsage)],
+    ["Current draw (est.)", 
+      (isPresent(loadA) ? formatUnit(loadA, "A", 3) : "—") + 
+      (isPresent(loadA) ? createSparklineSVG(sparklines.currentDraw) : "")
+    ],
+    ["Voltage (battery bus)", formatUnit(battV, "V") + createSparklineSVG(sparklines.voltage)],
     [
       "CPU temperature",
-      isPresent(data.fmt.cpu.temp) ? `${data.fmt.cpu.temp}` : "—",
+      (isPresent(data.fmt.cpu.temp) ? `${data.fmt.cpu.temp}` : "—") + 
+      (isPresent(cpuTemp) ? createSparklineSVG(sparklines.cpuTemp) : "")
     ],
     [
       "CPU load average *",
-      isPresent(data.fmt.cpu.load_15min) ? `${data.fmt.cpu.load_15min}%` : "—",
+      (isPresent(data.fmt.cpu.load_15min) ? `${data.fmt.cpu.load_15min}%` : "—") +
+      (isPresent(cpuLoad) ? createSparklineSVG(sparklines.cpuLoad) : "")
     ],
-    ["Solar charging?", inferCharging(data) ? "yes" : "no"],
-    ["Main battery SOC", isPresent(data.fmt.soc) ? `${data.fmt.soc}` : "—"],
+    ["Status", data.fmt.status],
+    ["Main battery SOC", 
+      (isPresent(data.fmt.soc) ? `${data.fmt.soc}` : "—") +
+      (socPct ? createSparklineSVG(sparklines.mainBattery) : "")
+    ],
     [
       "Backup battery SOC",
-      isPresent(data.fmt.axp_batt.capacity)
-        ? `${data.fmt.axp_batt.capacity}`
-        : "—",
+      (isPresent(data.fmt.axp_batt.capacity) ? `${data.fmt.axp_batt.capacity}` : "—") +
+      (backupSoc ? createSparklineSVG(sparklines.backupBattery) : "")
     ],
   ];
 
@@ -184,21 +231,28 @@ function createDefinitionList(pairs) {
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
   loadJSON(STATS_URL);
+  
+  // Set up automatic refresh for power page only
+  if (window.location.pathname.includes("/power/")) {
+    setInterval(() => {
+      loadJSON(STATS_URL);
+    }, 10000); // Refresh every 10 seconds
+  }
 
   // Mobile menu toggle
-  const menuToggle = document.querySelector('.menu-toggle');
-  const menuItems = document.getElementById('menu-items');
+  const menuToggle = document.querySelector(".menu-toggle");
+  const menuItems = document.getElementById("menu-items");
 
   if (menuToggle && menuItems) {
-    menuToggle.addEventListener('click', () => {
-      menuItems.classList.toggle('show');
+    menuToggle.addEventListener("click", () => {
+      menuItems.classList.toggle("show");
     });
 
     // Close menu when clicking outside
-    document.addEventListener('click', (event) => {
-      const menu = document.querySelector('.mobile-menu');
+    document.addEventListener("click", (event) => {
+      const menu = document.querySelector(".mobile-menu");
       if (menu && !menu.contains(event.target)) {
-        menuItems.classList.remove('show');
+        menuItems.classList.remove("show");
       }
     });
   }
