@@ -16,18 +16,18 @@ Requires [Hugo 0.145](https://gohugo.io/) or newer!
 - **Content Management**: Use [Pages CMS](https://app.pagescms.org/) for easy content editing (no Git knowledge required)
 - **Configuration**: The `.pages.yml` file is already configured and ready to use
 - **Local Development**: Run `hugo server` to start the local development server
-- **Ready to Go**: Just open your repository in Pages CMS to start managing content!
-- **No Setup Required**: Everything is configured and ready for immediate use
+- **Ready to Go**: Just open the repository in Pages CMS to start managing content!
+- **No Setup Required**: Everything *should be* configured and ready for immediate use. If you have issues reach out to @orban on Slack.
 
 ### 🚀 **Quick Access to Pages CMS**
 
 **[📝 Open Pages CMS Now](https://app.pagescms.org/)** - Click to start managing content!
 
-**Steps to access your site:**
+**Steps to access the site:**
 
 1. Click the button above
 2. Sign in with your GitHub account
-3. Select your `sequoia_fabrica_blog` repository
+3. Select the `sequoia_fabrica_blog` repository
 4. Start editing content immediately!
 
 ## Project Structure
@@ -45,7 +45,7 @@ sequoia_fabrica_blog/
 └── utils/                     # Build and utility scripts
 ```
 
-**Note**: The `.pages.yml` file contains the complete Pages CMS configuration for your Hugo site, including content types, media management, and field definitions. The configuration can be customized further if needed and supports adding new content types and fields.
+**Note**: The `.pages.yml` file contains the complete Pages CMS configuration for the Hugo site, including content types, media management, and field definitions. The configuration can be customized further if needed and supports adding new content types and fields.
 
 ## Local Development
 
@@ -64,7 +64,7 @@ hugo server
 
 We've integrated [Pages CMS](https://pagescms.org/) for easy content management:
 
-1. **Access Pages CMS**: Open your repository in Pages CMS to manage content through an intuitive interface
+1. **Access Pages CMS**: Open this repository in Pages CMS to manage content through an intuitive interface
 2. **Edit Content**: Use the web-based editor to create and edit blog posts, pages, and manage media
 3. **Media Management**: Upload and organize images through the integrated media browser
 4. **No Git Knowledge Required**: Perfect for content editors who prefer a visual interface
@@ -87,10 +87,6 @@ It's helpful to resize all images to max 800x800 before committing them to githu
 This site builds custom taxonomy for `Authors` which can be accessed via `http://localhost:1313/authors/`. Individual data about each author can be written in `content/authors/authorname/index.md`
 
 **Note**: Authors can now be managed through Pages CMS as well, making it easier to maintain author information.
-
-## Pages CMS Integration
-
-The Pages CMS configuration (`.pages.yml`) is based on the [official Pages CMS documentation](https://pagescms.org/docs/configuration/) and is fully configured for your Hugo site structure and content types. It's production-ready and has been tested with your current Hugo setup. The configuration includes all necessary content types, media management, and field definitions for your site. You can start using Pages CMS immediately without any additional configuration. The CMS is fully integrated with your Hugo build and deployment pipeline.
 
 ### Getting Started with Pages CMS
 
@@ -118,15 +114,10 @@ The Pages CMS configuration (`.pages.yml`) is based on the [official Pages CMS d
    - **Draft Status**: Mark as draft if not ready to publish
 5. **Save & Publish**: Save your changes and the post will be automatically built and deployed
 
-### Benefits of Pages CMS
+## Deployment
 
-- **Visual Interface**: No need to write markdown or understand Git
-- **Media Management**: Easy image uploads and organization
-- **Content Validation**: Ensures all required fields are filled
-- **Collaboration**: Multiple editors can work on content simultaneously
-- **Version Control**: All changes are tracked through Git commits
-- **Production Ready**: Fully integrated with your Hugo build and deployment pipeline
-- **Tested & Verified**: Configuration has been tested and is ready for production use
+The site is built using [Hugo](https://gohugo.io/) and deployed to our solar server on the roof. The deployment process is automated using GitHub Actions.
+When you push changes to the `main` branch, the site is automatically built and deployed to the live server.
 
 # Deploys and Github Actions
 
@@ -137,8 +128,6 @@ There are currently 3 GitHub Actions that run:
 1. ✅ **`Test build hugo site`** - runs on every commit to ensure the site builds without errors
 2. ✅ **`Build and deploy site`** - builds and deploys the site to the main domain (fully operational)
 3. ✅ **`Deploy Hugo site to Pages`** - builds the site for GitHub Pages as a preview site
-
-All GitHub Actions are now working and fully operational!
 
 # Additional utilities
 
@@ -159,10 +148,10 @@ depends on
 
 `dither_images.py` recursively traverses folders and creates dithered versions of the images it finds. It also reduces the size of all images to 800x800. These are stored in the same folder as the images in a folder called "dithers".
 
-#### TODO
+#### TODO (@camilleanne)
 
 - bug: images taller than wide are rotated when the 800x800 thumbnail is made
-- bug: images smaller than 800x800 are scaled _up_
+- bug: images smaller than 800x800 are scaled *up*
 - bug: pngs with transparency turn transparent areas black
 - feature: configurable image size
 
@@ -204,7 +193,7 @@ options:
 This script recursively traverses folders and enumerates the file size of all html pages and associated media.
 The calculated total file size is then added to the HTML page. The script looks for a `div` with class `page-size` to add the page metadata in to. This div is currently found in `layouts/partials/footer.html`
 
-This script should be run _after_ the site has been generated on the resulting files. It is a post-processing step.
+This script should be run *after* the site has been generated on the resulting files. It is a post-processing step.
 In the case of Hugo, this is usually the directory called `public`. Add the baseurl that you also use in production:
 
 ```bash
@@ -229,9 +218,18 @@ options:
 
 This is a script to build the hugo site and run the various support scripts. It assumes you generate and deploy the site on the same machine.
 
-It can be used in `cron` to make a daily build at 12:15 and log the output.
+It can be used to build the site with a custom base URL, repository directory, content directory, and output directory.
+It is useful for local development and testing, or for building the site before deploying it to a server.
 
-`15 12 * * * /bin/bash /path/to/repo/utils/build_site.sh > /path/to/build.log 2>&1`
+### Usage
+
+To build the site, run the script with the desired options. The default values are set to work in most cases.
+
+```bash
+./utils/build_site.sh --baseURL //localhost:9000 --repoDir . --contentDir content --outputDir built-site
+```
+
+If you want to see the available options, run the script with `--help`:
 
 ```bash
 ❯ ./utils/build_site.sh --help
@@ -263,7 +261,3 @@ The Solar v.2 theme was made by
 With contributions by
 
 - [Erhard Maria Klein](http://www.weitblick.de/)
-
-# Donations
-
-If Low-Tech Magazine or this theme has been useful to your work, please support us by making a one time donation [through Paypal](https://www.paypal.com/paypalme/lowtechmagazine) or a recurring one [through Patreon](https://solar.lowtechmagazine.com/donate/)
