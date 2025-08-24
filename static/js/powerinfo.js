@@ -19,6 +19,9 @@ const SHUNT_MAX_BYTES = 128 * 1024; // tail window
 const SHUNT_MAX_AGE_MS = 20_000; // consider stale after 20s
 const PMIC_LOSS_FRAC = 0.0; // start at 0; tune later (0.02..0.05)
 const CPU_TEMP_PATH = "/sys/class/thermal/thermal_zone0/temp"; // CPU temperature path
+// Use existing ESP logger JSONL file for sparkline data
+const SPARKLINE_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours of data
+const SPARKLINE_BUCKET_MS = 60 * 1000; // 1-minute averages for sparklines
 
 // ---------- HELPERS ----------
 const safeFloat = (v, s = 1) => {
@@ -133,6 +136,99 @@ async function getCpuTemperature() {
   return null;
 }
 
+// Analyze ESP logger JSONL for sparkline data
+async function getSparklineDataFromLog() {
+  try {
+    if (!(await fileExists(SHUNT_LOG_PATH))) {
+      return createEmptySparklineData();
+    }
+
+    const now = msNow();
+    const cutoffTime = now - SPARKLINE_WINDOW_MS;
+    
+    // Read recent data from JSONL file
+    const stat = await fsp.stat(SHUNT_LOG_PATH);
+    const readSize = Math.min(stat.size, 1024 * 1024); // Read last 1MB max
+    const start = Math.max(0, stat.size - readSize);
+    
+    const fd = await fsp.open(SHUNT_LOG_PATH, "r");
+    let buffer;
+    try {
+      const result = await fd.read({
+        position: start,
+        length: readSize,
+        buffer: Buffer.alloc(readSize),
+      });
+      buffer = result.buffer;
+    } finally {
+      await fd.close();
+    }
+
+    const lines = buffer.toString("utf8").trim().split("\n").filter(Boolean);
+    const buckets = new Map();
+    
+    // Process JSONL lines into time buckets
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        const timestamp = entry.ts ? Date.parse(entry.ts) : null;
+        
+        if (!timestamp || timestamp < cutoffTime) continue;
+        
+        const bucketTime = Math.floor(timestamp / SPARKLINE_BUCKET_MS) * SPARKLINE_BUCKET_MS;
+        
+        if (!buckets.has(bucketTime)) {
+          buckets.set(bucketTime, {
+            count: 0,
+            sums: { v: 0, i: 0, p: 0, soc: 0 }
+          });
+        }
+        
+        const bucket = buckets.get(bucketTime);
+        bucket.sums.v += safeFloat(entry.v, 1) || 0;
+        bucket.sums.i += safeFloat(entry.i, 1000) || 0; // mA to A
+        bucket.sums.p += safeFloat(entry.p, 1000) || 0; // mW to W
+        bucket.sums.soc += (typeof entry.soc === 'number') ? entry.soc * 100 : 0; // to percentage
+        bucket.count++;
+      } catch (e) {
+        continue; // Skip malformed entries
+      }
+    }
+    
+    // Convert to sparkline format
+    const sortedBuckets = Array.from(buckets.entries()).sort((a, b) => a[0] - b[0]);
+    
+    return {
+      timestamps: sortedBuckets.map(([time]) => time),
+      voltage: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? bucket.sums.v / bucket.count : 0),
+      currentDraw: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0),
+      powerUsage: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? Math.abs(bucket.sums.p) / bucket.count : 0),
+      mainBattery: sortedBuckets.map(([, bucket]) => bucket.count > 0 ? bucket.sums.soc / bucket.count : 0),
+      // These come from system monitoring, not ESP log
+      cpuTemp: [],
+      cpuLoad: [],
+      backupBattery: []
+    };
+    
+  } catch (error) {
+    console.warn("Failed to analyze ESP log for sparklines:", error.message);
+    return createEmptySparklineData();
+  }
+}
+
+function createEmptySparklineData() {
+  return {
+    timestamps: [],
+    voltage: [],
+    currentDraw: [],
+    powerUsage: [],
+    mainBattery: [],
+    cpuTemp: [],
+    cpuLoad: [],
+    backupBattery: []
+  };
+}
+
 // ---------- CORE ----------
 async function getPowerInfo() {
   const t0 = msNow();
@@ -186,13 +282,7 @@ async function getPowerInfo() {
       shunt_stale_ms = Number.isFinite(tParsed) ? msNow() - tParsed : null;
     }
 
-    // Status from signed battery power
-    if (shunt_V > 13.5) {
-      status = "charging";
-    } else if (shunt_V < 13.5) {
-      status = "discharging";
-    }
-  }
+    status = shunt.status; // charging|discharging|idle|unknown
 
   // Compute system load
   // If shunt is present and fresh enough → p_load = p_in - p_shunt
@@ -247,6 +337,18 @@ async function getPowerInfo() {
     // derived system load
     load_W: p_load_W,
   };
+
+  // Get sparkline data from ESP logger and add CPU/system data
+  const sparklines = await getSparklineDataFromLog();
+  
+  // Add system monitoring data that's not in ESP logs
+  // For now, these will be empty arrays since we don't have historical CPU data
+  // You could extend this to sample and store CPU data over time if needed
+  sparklines.cpuTemp = [];
+  sparklines.cpuLoad = [];
+  sparklines.backupBattery = [];
+  
+  out.sparklines = sparklines;
 
   // Also provide formatted strings for templates that want ready-to-print values
   out.fmt = {
