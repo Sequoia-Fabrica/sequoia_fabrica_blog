@@ -1,0 +1,19 @@
+# Cross-compilation configuration for ARMv7
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+
+# Static linking with musl
+[target.armv7-unknown-linux-musleabihf]
+linker = "arm-linux-gnueabihf-gcc"
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[env]
+CC_armv7_unknown_linux_gnueabihf = "arm-linux-gnueabihf-gcc"
+CXX_armv7_unknown_linux_gnueabihf = "arm-linux-gnueabihf-g++"
+AR_armv7_unknown_linux_gnueabihf = "arm-linux-gnueabihf-ar"
+CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER = "arm-linux-gnueabihf-gcc"
+
+CC_armv7_unknown_linux_musleabihf = "arm-linux-gnueabihf-gcc"
+CXX_armv7_unknown_linux_musleabihf = "arm-linux-gnueabihf-g++"
+AR_armv7_unknown_linux_musleabihf = "arm-linux-gnueabihf-ar"
+CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER = "arm-linux-gnueabihf-gcc"
