@@ -1,0 +1,28 @@
+[Unit]
+Description=ESP Logger Prometheus Exporter
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+ExecStart=/usr/local/bin/esp-exporter --log-file /var/log/esp_logger/esp_log.jsonl --port 9112 --bind 0.0.0.0
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/
+ReadWritePaths=/var/log/esp_logger
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
