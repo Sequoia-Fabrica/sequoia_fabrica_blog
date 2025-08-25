@@ -94,17 +94,7 @@ async function loadJSON(url) {
 function setupBatteryMeter(data) {
   const batteryLevel = clamp(safeInt(data.soc_pct), 0, 100);
 
-  const batteryElement = document.getElementById("battery");
-  const indicatorElement = document.getElementById("battery_data");
   const levelElement = document.getElementById("battery-level");
-
-  if (batteryElement) {
-    batteryElement.style.height = 100 - batteryLevel + "%";
-  }
-
-  if (indicatorElement) {
-    indicatorElement.style.top = 100 - batteryLevel + "vh";
-  }
 
   if (levelElement) {
     levelElement.textContent = batteryLevel;
