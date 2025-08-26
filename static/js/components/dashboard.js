@@ -63,6 +63,8 @@ class Dashboard {
   }
 
   populateForecast(weather) {
+    // All forecasts are now solar-relevant since we fetch for solar peak periods
+    
     const weatherIgnore = ["snow", "sleet", "wind"]; // because SF is practically tropical
     const weatherIcons = ["today_icon", "tomorrow_icon", "day_after_t_icon"];
     const weatherDays = ["today", "tomorrow", "day after tomorrow"];

@@ -63,6 +63,9 @@ function isAllDay(icsDate) {
     return icsDate && icsDate.length === 8;
 }
 
+// Export for use as module
+module.exports = fetchAndParseICS;
+
 // 🔁 Example usage
 // (async () => {
 //     const fs = require('fs')
