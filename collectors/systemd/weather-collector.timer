@@ -1,0 +1,11 @@
+[Unit]
+Description=Run weather collector every 60 minutes
+Requires=weather-collector.service
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

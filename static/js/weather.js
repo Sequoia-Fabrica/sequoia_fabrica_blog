@@ -192,6 +192,13 @@ const WEATHER_CONFIG = {
   FORECAST_HOUR: 12, // Noon
 };
 
+// Solar irradiation configuration for San Francisco
+const SOLAR_CONFIG = {
+  PEAK_START_HOUR: 9,  // 9 AM - start of useful solar generation
+  PEAK_END_HOUR: 16,   // 4 PM - end of peak solar generation
+  TIMEZONE: "America/Los_Angeles"
+};
+
 /**
  * Creates a formatted date string for the API
  * @param {number} daysFromNow - Number of days from current date
@@ -204,25 +211,67 @@ function getFormattedDate(daysFromNow = 0) {
 }
 
 /**
+ * Get the next 3 solar peak periods (noon times) starting from today or tomorrow
+ * @returns {Array<{date: string, label: string}>} Array of solar peak dates and labels
+ */
+function getNextSolarPeakPeriods() {
+  const now = new Date();
+  const sfTime = new Date(now.toLocaleString("en-US", {timeZone: SOLAR_CONFIG.TIMEZONE}));
+  const currentHour = sfTime.getHours();
+  
+  const periods = [];
+  let startDay = 0;
+  
+  // If it's past noon (12 PM), start forecasting from tomorrow
+  if (currentHour >= 12) {
+    startDay = 1;
+  }
+  
+  for (let i = 0; i < 3; i++) {
+    const forecastDate = new Date(sfTime);
+    forecastDate.setDate(sfTime.getDate() + startDay + i);
+    
+    const labels = ['today', 'tomorrow', 'day after tomorrow'];
+    let label;
+    
+    if (startDay === 0) {
+      label = labels[i];
+    } else {
+      // If starting from tomorrow, shift labels
+      label = i === 0 ? 'tomorrow' : (i === 1 ? 'day after tomorrow' : 'in 3 days');
+    }
+    
+    periods.push({
+      date: forecastDate.toISOString().split('T')[0], // YYYY-MM-DD
+      label: label
+    });
+  }
+  
+  return periods;
+}
+
+/**
  * Queries the BrightSky API for weather data for San Francisco
- * @returns {Promise<Object>} Object containing weather icons for today, tomorrow, and day after
- * @property {string} today_icon - Weather icon code for today
- * @property {string} tomorrow_icon - Weather icon code for tomorrow
- * @property {string} day_after_t_icon - Weather icon code for day after tomorrow
+ * Fetches forecasts for the next 3 solar peak periods (around noon)
+ * @returns {Promise<Object>} Object containing weather icons for solar charging periods
+ * @property {string} today_icon - Weather icon code for next solar period
+ * @property {string} tomorrow_icon - Weather icon code for second solar period  
+ * @property {string} day_after_t_icon - Weather icon code for third solar period
  * @throws {Error} If the weather API request fails
  */
 async function getWeather() {
+  const solarPeriods = getNextSolarPeakPeriods();
+  console.log('Fetching weather for solar peak periods:', solarPeriods.map(p => `${p.label}: ${p.date}`).join(', '));
+  
   const forecasts = [
-    { title: "today", daysFromNow: 0 },
-    { title: "tomorrow", daysFromNow: 1 },
-    { title: "day_after_t", daysFromNow: 2 },
+    { title: "today", date: solarPeriods[0].date },
+    { title: "tomorrow", date: solarPeriods[1].date },
+    { title: "day_after_t", date: solarPeriods[2].date },
   ];
 
   const weather = {};
 
   for (const forecast of forecasts) {
-    const date = getFormattedDate(forecast.daysFromNow);
-
     const requestUrl = url.parse(
       url.format({
         protocol: "http",
@@ -230,9 +279,11 @@ async function getWeather() {
         pathname: WEATHER_CONFIG.API_PATH,
         query: {
           wmo_station_id: WEATHER_CONFIG.WMO_STATION_ID,
-          date: date,
+          date: forecast.date,
           tz: WEATHER_CONFIG.TIMEZONE,
           units: WEATHER_CONFIG.UNITS,
+          // Request specific hour data around solar peak (noon)
+          last_date: forecast.date + 'T' + WEATHER_CONFIG.FORECAST_HOUR.toString().padStart(2, '0') + ':00',
         },
       })
     );
@@ -242,7 +293,26 @@ async function getWeather() {
         () => makeRequest(requestUrl),
         `weather fetch for ${forecast.title}`
       );
-      weather[forecast.title + "_icon"] = response.weather?.[0]?.icon ?? "";
+      // Find the weather data closest to our solar peak hour (noon)
+      const weatherData = response.weather || [];
+      let selectedWeather = weatherData[0]; // Default to first entry
+      
+      // Look for entry closest to our target hour (noon)
+      if (weatherData.length > 1) {
+        const targetHour = WEATHER_CONFIG.FORECAST_HOUR;
+        selectedWeather = weatherData.reduce((closest, current) => {
+          if (!current.timestamp) return closest;
+          
+          const currentHour = new Date(current.timestamp).getHours();
+          const closestHour = new Date(closest.timestamp || current.timestamp).getHours();
+          
+          return Math.abs(currentHour - targetHour) < Math.abs(closestHour - targetHour) 
+            ? current 
+            : closest;
+        }, weatherData[0]);
+      }
+      
+      weather[forecast.title + "_icon"] = selectedWeather?.icon ?? "";
     } catch (error) {
       console.error(
         `Failed to fetch weather for ${forecast.title} after all retries:`,
@@ -252,6 +322,9 @@ async function getWeather() {
     }
   }
 
+  // All forecasts are now solar-relevant since we fetch for solar peak periods
+  weather.solar_relevant = true;
+  
   return weather;
 }
 

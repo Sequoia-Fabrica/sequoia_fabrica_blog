@@ -11,7 +11,7 @@ featured_image: "solar-powered-server-weather-2.png"
 
 ## Power supply
 
-This is a forecast for the coming days in San Francisco, CA, updated daily:
+This is a forecast for the coming days in San Francisco, CA, updated hourly:
 <p class="forecast"></p>
 
 This weather forecast is [powered by BrightSky](https://brightsky.dev/).

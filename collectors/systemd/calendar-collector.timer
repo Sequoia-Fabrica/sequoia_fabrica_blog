@@ -1,0 +1,11 @@
+[Unit]
+Description=Run calendar collector every 60 minutes
+Requires=calendar-collector.service
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

@@ -93,9 +93,9 @@ battery-svg {
 // Sparkline styles
 .sparkline {
     display: inline-block;
-    margin-left: 0.5rem;
+    margin-left: 0.75rem;
     vertical-align: middle;
-    opacity: 0.7;
+    opacity: 0.8;
     
     path {
         stroke: var(--color-primary);
@@ -248,15 +248,6 @@ footer {
 /*---------------------
 BACKGROUND and BATTERY METER
 ---------------------*/
-
-#battery {
-    background: var(--color-sky);
-}
-
-#battery_data {
-    font-size: 0.75rem;
-    pointer-events: none;
-}
 
 a[title="Power"] {
     pointer-events: auto;
@@ -772,6 +763,7 @@ ARTICLE TYPOGRAPHY
 
 // width settings
 .entry-header,
+.site-header,
 figure,
 .figure-controls {
     max-width: var(--max-img-width);
@@ -1316,6 +1308,28 @@ footer .weather_text {
             width: 100%;
             border-bottom: 0;
             padding-bottom: 0;
+        }
+    }
+    dd {
+        margin-left: calc(300px + 1rem);
+        @include media(tablet) {
+            margin-left: 0;
+        }
+        
+        // Status value styling
+        .status-good {
+            color: var(--color-sub);
+            font-weight: 500;
+        }
+        
+        .status-full {
+            color: var(--color-sub);
+            font-weight: 500;
+        }
+        
+        .status-percentage {
+            color: var(--color-sub);
+            font-weight: 500;
         }
     }
 }

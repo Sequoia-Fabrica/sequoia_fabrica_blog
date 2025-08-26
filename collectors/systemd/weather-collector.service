@@ -1,0 +1,12 @@
+[Unit]
+Description=Weather Data Collector
+After=network.target
+
+[Service]
+Type=oneshot
+User=monitoring
+Group=monitoring
+WorkingDirectory=/opt/sequoia_fabrica_blog
+ExecStart=/usr/bin/node collectors/weather-collector.js
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,12 @@
+[Unit]
+Description=Power Metrics Collector
+After=network.target
+
+[Service]
+Type=oneshot
+User=monitoring
+Group=monitoring
+WorkingDirectory=/home/olimex/sequoia_fabrica_blog
+ExecStart=/usr/bin/node collectors/power-collector.js
+StandardOutput=journal
+StandardError=journal

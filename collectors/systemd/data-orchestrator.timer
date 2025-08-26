@@ -1,0 +1,11 @@
+[Unit]
+Description=Run data orchestrator every 2 minutes
+Requires=data-orchestrator.service
+
+[Timer]
+OnCalendar=*:0/2
+Persistent=true
+RandomizedDelaySec=15
+
+[Install]
+WantedBy=timers.target

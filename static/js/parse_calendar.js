@@ -1,5 +1,5 @@
-async function fetchAndParseICS(feedUrl) {
-    const response = await fetch(feedUrl);
+async function fetchAndParseICS(url) {
+    const response = await fetch(url);
     const text = await response.text();
 
     const events = [];
@@ -63,18 +63,14 @@ function isAllDay(icsDate) {
     return icsDate && icsDate.length === 8;
 }
 
+// Export for use as module
 module.exports = fetchAndParseICS;
 
-// // 🔁 Example usage
+// 🔁 Example usage
 // (async () => {
-//     const fs = require("fs");
-//     const icsUrl =
-//         "http://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics";
+//     const fs = require('fs')
+//     const icsUrl = "http://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics"; // Replace with your .ics feed
 //     const events = await fetchAndParseICS(icsUrl);
 //     // console.log(JSON.stringify(events, null, 2));
-//     fs.writeFileSync(
-//         "static/calendar.json",
-//         JSON.stringify(events, null, 2),
-//         "utf-8"
-//     );
+//     fs.writeFileSync('static/calendar.json', JSON.stringify(events, null, 2), 'utf-8');
 // })();
