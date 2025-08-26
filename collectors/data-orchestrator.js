@@ -276,7 +276,7 @@ async function generateStatsJson() {
       gen_ms: Date.now() - Date.parse(powerMetrics.ts),
       uptime: formatUptime(powerMetrics.uptime || 0),
 
-      // Power metrics (maintain compatibility with existing names)
+      // Power metrics
       load_W: loadW,
       p_in_W: powerMetrics.p_in_W || 0,
       W: loadW, // Alternative name used by frontend
@@ -289,7 +289,6 @@ async function generateStatsJson() {
       esp32_v_V: esp32V,
       esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : null, // Convert mA to A
       soc_pct: socPct,
-      charge: socPct, // Alternative name
       status: powerMetrics.status || "unknown",
 
       // AXP20x metrics

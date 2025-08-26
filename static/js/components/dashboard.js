@@ -37,8 +37,8 @@ class Dashboard {
   populateDashboard(stats) {
     const batteryText = stats.fmt?.status || stats.fmt?.soc || "—";
 
-    // Get power usage from available sources, prioritize load_W
-    let powerUsed = stats.load_W || stats.p_in_W || stats.W;
+    // Get power usage from primary source
+    let powerUsed = stats.load_W;
     if (powerUsed != null && Number.isFinite(powerUsed)) {
       powerUsed = `${powerUsed.toFixed(2)}W`;
     } else {
