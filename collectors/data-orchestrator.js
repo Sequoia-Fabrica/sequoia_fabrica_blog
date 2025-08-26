@@ -112,12 +112,17 @@ async function getSparklineDataFromPowerLog() {
             count: 0,
             sums: {
               v: 0, i: 0, p: 0, soc: 0, load_w: 0,
-              cpu_temp: 0, cpu_load: 0, axp_capacity: 0
+              cpu_temp: 0, cpu_load: 0, axp_capacity: 0,
+              // ESP32 specific sums
+              esp32_v: 0, esp32_i: 0, esp32_p: 0, esp32_soc: 0,
+              // AXP specific sums  
+              axp_v: 0, axp_i: 0, axp_p: 0, axp_soc: 0
             },
           });
         }
 
         const bucket = buckets.get(bucketTime);
+        // Legacy fields (for backward compatibility)
         bucket.sums.v += safeFloat(entry.v, 1) || 0;
         bucket.sums.i += safeFloat(entry.i, 1000) || 0; // mA to A  
         bucket.sums.p += safeFloat(entry.p, 1000) || 0; // mW to W
@@ -125,7 +130,24 @@ async function getSparklineDataFromPowerLog() {
         bucket.sums.load_w += safeFloat(entry.load_w, 1) || 0;
         bucket.sums.cpu_temp += safeFloat(entry.cpu_temp_c, 1) || 0;
         bucket.sums.cpu_load += safeFloat(entry.cpu_load_15min, 1) || 0;
-        bucket.sums.axp_capacity += safeFloat(entry.axp_batt_capacity, 1) || 0;
+        bucket.sums.axp_capacity += safeFloat(entry.axp_capacity || entry.axp_batt_capacity, 1) || 0;
+        
+        // ESP32 specific data
+        if (entry.esp32_v !== undefined) {
+          bucket.sums.esp32_v += safeFloat(entry.esp32_v, 1) || 0;
+          bucket.sums.esp32_i += safeFloat(entry.esp32_i, 1000) || 0; // mA to A
+          bucket.sums.esp32_p += safeFloat(entry.esp32_p, 1000) || 0; // mW to W
+          bucket.sums.esp32_soc += safeFloat(entry.esp32_soc, 1) * 100 || 0; // to percentage
+        }
+        
+        // AXP specific data  
+        if (entry.axp_v !== undefined) {
+          bucket.sums.axp_v += safeFloat(entry.axp_v, 1) || 0;
+          bucket.sums.axp_i += safeFloat(entry.axp_i, 1000) || 0; // mA to A
+          bucket.sums.axp_p += safeFloat(entry.axp_p, 1000) || 0; // mW to W
+          bucket.sums.axp_soc += safeFloat(entry.axp_soc, 1) * 100 || 0; // to percentage
+        }
+        
         bucket.count++;
       } catch (e) {
         continue; // Skip malformed entries
@@ -239,8 +261,9 @@ async function generateStatsJson() {
     }
 
     // Calculate derived values
-    const loadW = powerMetrics.load_w || 0;
-    const battV = powerMetrics.v || 0;
+    const loadW = powerMetrics.load_W || 0;
+    const axpBattV = powerMetrics.axp_batt_v_V || 0;
+    const esp32V = powerMetrics.esp32_v_V || null;
     const socPct = Math.round((powerMetrics.soc || 0) * 100);
 
     // Get sparkline data
@@ -255,14 +278,16 @@ async function generateStatsJson() {
 
       // Power metrics (maintain compatibility with existing names)
       load_W: loadW,
-      p_in_W: powerMetrics.p_in_w || 0,
+      p_in_W: powerMetrics.p_in_W || 0,
       W: loadW, // Alternative name used by frontend
 
-      // Battery metrics
-      shunt_V: battV,
-      batt_V: battV, // Alternative name
-      V: battV, // Alternative name
-      shunt_A: powerMetrics.i / 1000, // Convert mA to A
+      // Battery metrics - AXP20x PMIC
+      axp_batt_v_V: axpBattV,
+      axp_batt_i_A: powerMetrics.axp_batt_i_mA / 1000, // Convert mA to A
+      
+      // Battery metrics - ESP32 shunt monitor
+      esp32_v_V: esp32V,
+      esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : null, // Convert mA to A
       soc_pct: socPct,
       charge: socPct, // Alternative name
       status: powerMetrics.status || "unknown",

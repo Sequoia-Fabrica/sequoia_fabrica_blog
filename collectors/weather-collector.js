@@ -45,7 +45,9 @@ async function collectWeatherData() {
     // Attempt to fetch fresh weather data
     const weatherData = await getWeather();
 
-    // Create cache entry
+    // All weather fetches are now solar-relevant since we fetch for solar peak periods
+
+    // Create cache entry for successful fetch
     const cacheEntry = {
       ts: timestamp,
       ms: Date.now(),

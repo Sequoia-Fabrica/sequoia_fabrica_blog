@@ -19,7 +19,7 @@ class PowerMonitor {
     }
   }
 
-  createSparklineSVG(data, width = 100, height = 20) {
+  createSparklineSVG(data, width = 120, height = 24) {
     if (!data || data.length < 2) {
       // Show placeholder dots when no data
       return `<svg width="${width}" height="${height}" class="sparkline sparkline-loading" viewBox="0 0 ${width} ${height}">
@@ -57,10 +57,11 @@ class PowerMonitor {
   }
 
   populatePowerData(data) {
-    const loadW = this.safeNumber(data.load_W) || this.safeNumber(data.p_in_W) || this.safeNumber(data.W);
-    const battV = this.safeNumber(data.shunt_V) || this.safeNumber(data.batt_V) || this.safeNumber(data.V);
-    const loadA = battV > 0 ? loadW / battV : null;
-    const socPct = this.safeInt(data.soc_pct) || this.safeInt(data.charge);
+    const loadW = this.safeNumber(data.load_W);
+    const axpBattV = this.safeNumber(data.axp_batt_v_V);
+    const shuntV = this.safeNumber(data.esp32_v_V);
+    const loadA = this.safeNumber(data.esp32_i_mA) * 1e-3;
+    const socPct = this.safeInt(data.soc);
     const cpuTemp = data.cpu_temp_c;
     const cpuLoad = data.cpu_load_15min;
     const backupSoc = this.safeNumber(data.axp_batt_capacity);
@@ -76,13 +77,19 @@ class PowerMonitor {
         this.formatUnit(loadW, "W") + this.createSparklineSVG(sparklines.powerUsage),
       ],
       [
-        "Current draw (est.)",
+        "Current draw",
         (this.isPresent(loadA) ? this.formatUnit(loadA, "A", 3) : "—") +
           (this.isPresent(loadA) ? this.createSparklineSVG(sparklines.currentDraw) : ""),
       ],
       [
+        "Voltage (power supply)",
+        (this.isPresent(axpBattV) ? this.formatUnit(axpBattV, "V") : "—") +
+          (this.isPresent(axpBattV) ? this.createSparklineSVG(sparklines.voltage) : ""),
+      ],
+      [
         "Voltage (battery bus)",
-        this.formatUnit(battV, "V") + this.createSparklineSVG(sparklines.voltage),
+        (this.isPresent(shuntV) ? this.formatUnit(shuntV, "V") : "—") +
+          (this.isPresent(shuntV) ? this.createSparklineSVG(sparklines.voltage) : ""),
       ],
       [
         "CPU temperature",
@@ -96,16 +103,16 @@ class PowerMonitor {
           : "—") +
           (this.isPresent(cpuLoad) ? this.createSparklineSVG(sparklines.cpuLoad) : ""),
       ],
-      ["Status", data.fmt?.status || "—"],
+      ["Status", this.styleStatus(data.fmt?.status || "—")],
       [
         "Main battery SOC",
-        (this.isPresent(data.fmt?.soc) ? `${data.fmt.soc}` : "—") +
+        (this.isPresent(data.fmt?.soc) ? this.stylePercentage(data.fmt.soc) : "—") +
           (socPct ? this.createSparklineSVG(sparklines.mainBattery) : ""),
       ],
       [
         "Backup battery SOC",
         (this.isPresent(data.fmt?.axp_batt?.capacity)
-          ? `${data.fmt.axp_batt.capacity}`
+          ? this.stylePercentage(data.fmt.axp_batt.capacity)
           : "—") +
           (backupSoc ? this.createSparklineSVG(sparklines.backupBattery) : ""),
       ],
@@ -140,6 +147,25 @@ class PowerMonitor {
 
   formatUnit(value, unit, decimals = 2) {
     return Number.isFinite(value) ? `${value.toFixed(decimals)}${unit}` : "—";
+  }
+
+  styleStatus(status) {
+    if (status === "Full" || status === "Charging") {
+      return `<span class="status-full">${status}</span>`;
+    }
+    return status;
+  }
+
+  stylePercentage(percentage) {
+    if (percentage && percentage.includes("%")) {
+      const value = parseInt(percentage, 10);
+      if (value >= 80) {
+        return `<span class="status-good">${percentage}</span>`;
+      } else if (value >= 50) {
+        return `<span class="status-percentage">${percentage}</span>`;
+      }
+    }
+    return percentage;
   }
 
   // Auto-refresh functionality
