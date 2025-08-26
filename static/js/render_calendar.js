@@ -59,21 +59,40 @@ function renderEventContent(eventInfo) {
 
 document.addEventListener("DOMContentLoaded", function () {
     const calendarEl = document.getElementById("calendar-view");
+    const desktopView = "dayGridMonth";
+    const mobileView = "listWeek";
+    const mobileBreakpoint = 768; // pixels
+    const views = {};
+    (views[desktopView] = {}), (views[mobileView] = {});
+
     const calendar = new FullCalendar.Calendar(calendarEl, {
         plugins: [
             FullCalendar.createPlugin(FullCalendar.DayGrid),
             FullCalendar.createPlugin(FullCalendar.ICalendar),
+            FullCalendar.createPlugin(FullCalendar.List),
         ],
         contentHeight: "auto",
-        initialView: "dayGridMonth",
+        initialView: desktopView,
+        // Add responsive views
+        views,
         headerToolbar: {
             left: "prev",
             center: "title",
             right: "next",
         },
+
+        // Add window resize handler for responsive behavior
+        windowResize: function (view) {
+            if (window.innerWidth < mobileBreakpoint) {
+                calendar.changeView(mobileView);
+            } else {
+                calendar.changeView(desktopView);
+            }
+        },
+
         // requires js/parse_calendar.js to be run as a cron job on the server
         // only runs intermittently (calendars don't change often) and is more efficient
-        events: '/api/calendar.json',
+        events: "/api/calendar.json",
         // the "cheater" way to render the calendar by just grabbing the ics stream
         // more power intensive as it will run on each page load
         // events: {
@@ -106,5 +125,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
     });
+
+    // Set initial view based on screen size
+    if (window.innerWidth < mobileBreakpoint) {
+        calendar.changeView(mobileView);
+    }
+
     calendar.render();
 });
