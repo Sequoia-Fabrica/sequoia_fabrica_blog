@@ -9,6 +9,7 @@ use std::convert::Infallible;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::path::Path;
+use std::os::unix::fs::MetadataExt;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -142,21 +143,23 @@ impl Metrics {
 struct LogTailer {
     file_path: String,
     position: u64,
+    inode: Option<u64>,
     metrics: Arc<Metrics>,
 }
 
 impl LogTailer {
     fn new(file_path: String, metrics: Arc<Metrics>) -> Self {
         // Start from end of file to avoid processing existing entries
-        let position = if let Ok(metadata) = std::fs::metadata(&file_path) {
-            metadata.len()
+        let (position, inode) = if let Ok(metadata) = std::fs::metadata(&file_path) {
+            (metadata.len(), Some(metadata.ino()))
         } else {
-            0
+            (0, None)
         };
         
         Self {
             file_path,
             position,
+            inode,
             metrics,
         }
     }
@@ -167,6 +170,28 @@ impl LogTailer {
             return Ok(());
         }
         
+        let metadata = std::fs::metadata(path)?;
+        let file_size = metadata.len();
+        let current_inode = metadata.ino();
+
+        // Check if file has been replaced (different inode)
+        if let Some(stored_inode) = self.inode {
+            if current_inode != stored_inode {
+                info!("Log file replaced (inode changed from {} to {}), resetting position to 0", stored_inode, current_inode);
+                self.position = 0;
+                self.inode = Some(current_inode);
+            }
+        } else {
+            // First time seeing this file
+            self.inode = Some(current_inode);
+        }
+
+        // Check if file has been truncated (log rotation with copytruncate)
+        if file_size < self.position {
+            info!("Log file truncated (rotation detected), resetting position from {} to 0", self.position);
+            self.position = 0;
+        }
+
         let mut file = File::open(path)?;
         file.seek(SeekFrom::Start(self.position))?;
         
