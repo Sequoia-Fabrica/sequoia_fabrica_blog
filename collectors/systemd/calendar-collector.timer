@@ -3,7 +3,7 @@ Description=Run calendar collector every 60 minutes
 Requires=calendar-collector.service
 
 [Timer]
-OnCalendar=*-*-* */1:00:00
+OnCalendar=hourly
 Persistent=true
 RandomizedDelaySec=120
 
