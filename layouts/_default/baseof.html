@@ -23,6 +23,10 @@
 	{{ block "main" . }}{{ end }}
 	{{ partial "footer" . }}
 
+	<!-- Component scripts (load before main script.js) -->
+	<script src="{{ .Site.BaseURL }}js/components/ui-components.js"></script>
+	<script src="{{ .Site.BaseURL }}js/components/dashboard.js"></script>
+	<script src="{{ .Site.BaseURL }}js/components/power-monitor.js"></script>
 	<script src="{{ .Site.BaseURL }}js/script.js"></script>
 </body>
 </html>

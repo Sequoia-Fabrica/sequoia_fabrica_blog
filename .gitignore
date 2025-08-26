@@ -3,6 +3,7 @@
 /public/
 /resources/_gen/
 .hugo_build.lock
+built-site/
 
 # Executable may be added to repository
 hugo.exe
@@ -20,3 +21,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# vscode
+.vscode/
+settings.json

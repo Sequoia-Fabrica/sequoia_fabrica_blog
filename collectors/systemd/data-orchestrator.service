@@ -1,0 +1,12 @@
+[Unit]
+Description=Data Orchestrator - Aggregate monitoring data
+After=network.target
+
+[Service]
+Type=oneshot
+User=monitoring
+Group=monitoring
+WorkingDirectory=/home/olimex/sequoia_fabrica_blog
+ExecStart=/usr/bin/node collectors/data-orchestrator.js
+StandardOutput=journal
+StandardError=journal
