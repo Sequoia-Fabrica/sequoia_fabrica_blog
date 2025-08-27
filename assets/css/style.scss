@@ -194,7 +194,7 @@ a {
 }
 
 code {
-    font-size: (0.9em);
+    font-size: 0.9em;
     color: var(--color-sub);
     background-color: var(--color-code);
     padding: 0.2em;
@@ -800,15 +800,13 @@ figure,
     h3 {
         font-size: var(--font-medium);
         font-style: italic;
+        margin: calc(4 * var(--pad)) auto 0;
     }
     h4 {
         font-size: var(--font-body);
         font-style: italic;
         // text-transform: uppercase;
         // letter-spacing: 1px;
-    }
-    h3 {
-        margin: calc(4 * var(--pad)) auto 0;
     }
     h4,
     p,
@@ -935,7 +933,6 @@ figure {
             fill: var(--color-sub);
         }
         & + .imgindicator {
-            // position: absolute;
             visibility: visible;
         }
     }
@@ -1317,18 +1314,18 @@ footer .weather_text {
         @include media(tablet) {
             margin-left: 0;
         }
-        
+
         // Status value styling
         .status-good {
             color: var(--color-sub);
             font-weight: 500;
         }
-        
+
         .status-full {
             color: var(--color-sub);
             font-weight: 500;
         }
-        
+
         .status-percentage {
             color: var(--color-sub);
             font-weight: 500;
