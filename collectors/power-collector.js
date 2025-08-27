@@ -103,7 +103,7 @@ function parseAxInput(ue) {
   const online = ue.POWER_SUPPLY_ONLINE === "1";
   const v_uV = safeFloat(ue.POWER_SUPPLY_VOLTAGE_NOW, 1); // µV (raw from sysfs)
   const i_uA = safeFloat(ue.POWER_SUPPLY_CURRENT_NOW, 1); // µA (raw from sysfs)
-  const p_uW = present && online ? v_uV * i_uA : 0; // µW (µV * µA = µW)
+  const p_uW = present && online ? (v_uV * i_uA) * 1e-6 : 0; // µW (µV * µA * 1e-6 = µW)
   return { present, online, v_uV, i_uA, p_uW };
 }
 
@@ -112,7 +112,7 @@ function parseAxBattery(ue) {
   const present = ue.POWER_SUPPLY_PRESENT === "1";
   const v_uV = safeFloat(ue.POWER_SUPPLY_VOLTAGE_NOW, 1); // µV (raw from sysfs)
   const i_uA = safeFloat(ue.POWER_SUPPLY_CURRENT_NOW, 1); // µA (raw from sysfs, charging > 0)
-  const p_uW = present ? v_uV * i_uA : 0; // µW (µV * µA = µW)
+  const p_uW = present ? (v_uV * i_uA) * 1e-6 : 0; // µW (µV * µA * 1e-6 = µW)
   const capacity = safeFloat(ue.POWER_SUPPLY_CAPACITY, 1); // percentage
   const status = ue.POWER_SUPPLY_STATUS || "unknown";
   return { present, v_uV, i_uA, p_uW, capacity, status };
@@ -207,8 +207,9 @@ async function collectPowerMetrics() {
       esp32_v_V: esp32Metrics ? esp32Metrics.v_V : null, // ESP32 shunt voltage in V
       esp32_i_mA: esp32Metrics ? esp32Metrics.i_mA : null, // ESP32 shunt current in mA
       esp32_p_mW: esp32Metrics ? esp32Metrics.p_mW : null, // ESP32 shunt power in mW
-      soc: axpBattery.capacity / 100, // SOC as 0-1 fraction
-      status: axpBattery.status,
+      esp32_soc: esp32Metrics ? esp32Metrics.soc : null, // ESP32 SOC as 0-1 fraction
+      soc: esp32Metrics ? esp32Metrics.soc : axpBattery.capacity / 100, // Main SOC: prefer ESP32, fallback to AXP
+      status: esp32Metrics ? esp32Metrics.status : axpBattery.status,
 
       // System metrics
       ac_V: ac.v_uV * 1e-6,
@@ -226,7 +227,8 @@ async function collectPowerMetrics() {
 
       // AXP backup battery
       axp_batt_capacity: axpBattery.capacity,
-      axp_batt_present: axpBattery.present
+      axp_batt_present: axpBattery.present,
+      axp_soc: axpBattery.capacity / 100 // AXP SOC as 0-1 fraction for reference
     };
 
     return metrics;
