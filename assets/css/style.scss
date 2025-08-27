@@ -1488,6 +1488,19 @@ Global Responsive Styles
     font-size: var(--font-small);
 }
 
+.fc table {
+    margin: auto;
+    // override the theme table settings
+    th:first-child,
+    td:first-child,
+    td {
+        padding: 8px 5px;
+    }
+    th[role=presentation] {
+        padding-bottom: 0;
+    }
+}
+
 :root {
     --background-start-rgb: 240, 240, 240;
     --background-end-rgb: 255, 255, 255;
@@ -1496,7 +1509,7 @@ Global Responsive Styles
     .fc-button-primary {
         color: var(--color-links);
     }
-
+    --fc-page-bg-color: var(--color-icons-lines);
     --fc-small-font-size: var(--font-small);
     --fc-border-color: var(--color-icons-lines);
     --fc-event-border-color: var(--color-icons-lines);
