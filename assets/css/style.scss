@@ -1476,7 +1476,8 @@ Global Responsive Styles
 
 .fc-toolbar.fc-header-toolbar {
     margin-bottom: 1.5em;
-    width: var(--max-content-width);
+    width: 100%;
+    max-width: var(--max-content-width);
     align-self: center;
 }
 
