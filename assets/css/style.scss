@@ -1496,7 +1496,7 @@ Global Responsive Styles
     td {
         padding: 8px 5px;
     }
-    th[role=presentation] {
+    th[role="presentation"] {
         padding-bottom: 0;
     }
 }
@@ -1510,6 +1510,7 @@ Global Responsive Styles
         color: var(--color-links);
     }
     --fc-page-bg-color: var(--color-icons-lines);
+    --fc-neutral-bg-color: none;
     --fc-small-font-size: var(--font-small);
     --fc-border-color: var(--color-icons-lines);
     --fc-event-border-color: var(--color-icons-lines);
