@@ -207,8 +207,9 @@ async function collectPowerMetrics() {
       esp32_v_V: esp32Metrics ? esp32Metrics.v_V : null, // ESP32 shunt voltage in V
       esp32_i_mA: esp32Metrics ? esp32Metrics.i_mA : null, // ESP32 shunt current in mA
       esp32_p_mW: esp32Metrics ? esp32Metrics.p_mW : null, // ESP32 shunt power in mW
-      soc: axpBattery.capacity / 100, // SOC as 0-1 fraction
-      status: axpBattery.status,
+      esp32_soc: esp32Metrics ? esp32Metrics.soc : null, // ESP32 SOC as 0-1 fraction
+      soc: esp32Metrics ? esp32Metrics.soc : axpBattery.capacity / 100, // Main SOC: prefer ESP32, fallback to AXP
+      status: esp32Metrics ? esp32Metrics.status : axpBattery.status,
 
       // System metrics
       ac_V: ac.v_uV * 1e-6,
@@ -226,7 +227,8 @@ async function collectPowerMetrics() {
 
       // AXP backup battery
       axp_batt_capacity: axpBattery.capacity,
-      axp_batt_present: axpBattery.present
+      axp_batt_present: axpBattery.present,
+      axp_soc: axpBattery.capacity / 100 // AXP SOC as 0-1 fraction for reference
     };
 
     return metrics;
