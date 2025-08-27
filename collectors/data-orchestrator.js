@@ -263,7 +263,7 @@ async function generateStatsJson() {
     // Calculate derived values
     const loadW = powerMetrics.load_W || 0;
     const axpBattV = powerMetrics.axp_batt_v_V || 0;
-    const esp32V = powerMetrics.esp32_v_V || null;
+    const esp32V = powerMetrics.esp32_v_V || 0;
     const socPct = Math.round((powerMetrics.soc || 0) * 100);
 
     // Get sparkline data
@@ -279,15 +279,16 @@ async function generateStatsJson() {
       // Power metrics
       load_W: loadW,
       p_in_W: powerMetrics.p_in_W || 0,
-      W: loadW, // Alternative name used by frontend
 
       // Battery metrics - AXP20x PMIC
       axp_batt_v_V: axpBattV,
-      axp_batt_i_A: powerMetrics.axp_batt_i_mA / 1000, // Convert mA to A
+      axp_batt_i_mA: powerMetrics.axp_batt_i_mA || 0,
+      axp_batt_i_A: powerMetrics.axp_batt_i_mA ? powerMetrics.axp_batt_i_mA / 1000 : 0,
       
       // Battery metrics - ESP32 shunt monitor
       esp32_v_V: esp32V,
-      esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : null, // Convert mA to A
+      esp32_i_mA: powerMetrics.esp32_i_mA || null,
+      esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : null,
       soc_pct: socPct,
       status: powerMetrics.status || "unknown",
 
@@ -308,7 +309,10 @@ async function generateStatsJson() {
           load_15min: fmt(powerMetrics.cpu_load_15min || 0, 2),
         },
         soc: socPct > 0 ? `${socPct}%` : "—",
-        status: powerMetrics.status || "—"
+        status: powerMetrics.status || "—",
+        axp_batt: {
+          capacity: powerMetrics.axp_batt_capacity ? `${powerMetrics.axp_batt_capacity}%` : "—"
+        }
       }
     };
 

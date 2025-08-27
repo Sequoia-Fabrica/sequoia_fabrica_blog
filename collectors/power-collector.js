@@ -103,7 +103,7 @@ function parseAxInput(ue) {
   const online = ue.POWER_SUPPLY_ONLINE === "1";
   const v_uV = safeFloat(ue.POWER_SUPPLY_VOLTAGE_NOW, 1); // µV (raw from sysfs)
   const i_uA = safeFloat(ue.POWER_SUPPLY_CURRENT_NOW, 1); // µA (raw from sysfs)
-  const p_uW = present && online ? v_uV * i_uA : 0; // µW (µV * µA = µW)
+  const p_uW = present && online ? (v_uV * i_uA) * 1e-6 : 0; // µW (µV * µA * 1e-6 = µW)
   return { present, online, v_uV, i_uA, p_uW };
 }
 
@@ -112,7 +112,7 @@ function parseAxBattery(ue) {
   const present = ue.POWER_SUPPLY_PRESENT === "1";
   const v_uV = safeFloat(ue.POWER_SUPPLY_VOLTAGE_NOW, 1); // µV (raw from sysfs)
   const i_uA = safeFloat(ue.POWER_SUPPLY_CURRENT_NOW, 1); // µA (raw from sysfs, charging > 0)
-  const p_uW = present ? v_uV * i_uA : 0; // µW (µV * µA = µW)
+  const p_uW = present ? (v_uV * i_uA) * 1e-6 : 0; // µW (µV * µA * 1e-6 = µW)
   const capacity = safeFloat(ue.POWER_SUPPLY_CAPACITY, 1); // percentage
   const status = ue.POWER_SUPPLY_STATUS || "unknown";
   return { present, v_uV, i_uA, p_uW, capacity, status };
