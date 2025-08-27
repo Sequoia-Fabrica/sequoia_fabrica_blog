@@ -760,11 +760,13 @@ ARTICLE TYPOGRAPHY
 }
 
 // width settings
-.entry-header,
+.article,
 .site-header,
+.site-footer,
+main.article-list,
 figure,
 .figure-controls {
-    max-width: var(--max-img-width);
+    max-width: var(--max-content-width);
     margin: auto;
 }
 
