@@ -60,7 +60,7 @@ class PowerMonitor {
     const loadW = this.safeNumber(data.load_W);
     const axpBattV = this.safeNumber(data.axp_batt_v_V);
     const shuntV = this.safeNumber(data.esp32_v_V);
-    const loadA = this.safeNumber(data.esp32_i_mA);
+    const loadA = this.safeNumber(data.esp32_i_mA) * 1e-3;
     const socPct = this.safeInt(data.soc_pct);
     const cpuTemp = data.cpu_temp_c;
     const cpuLoad = data.cpu_load_15min;
