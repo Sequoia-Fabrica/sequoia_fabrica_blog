@@ -27,7 +27,7 @@ function renderEventContent(eventInfo) {
     // additional <a> tag is because of a bug in FullCalendar: see https://github.com/fullcalendar/fullcalendar/issues/6133
     let eventElement = `
             <div className="break-normal whitespace-normal">
-            ${isDayGridMonth ? "" : "<a href={eventInfo.event.url}></a>"}
+            ${isDayGridMonth ? "" : `<a href=${eventInfo.event.url}></a>`}
                 <b>
                     ${formatTime(
                         eventInfo.event.start ? eventInfo.event.start : null
@@ -63,14 +63,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const mobileView = "listWeek";
     const mobileBreakpoint = 768; // pixels
     const views = {};
-    (views[desktopView] = {}), (views[mobileView] = {});
+    views[desktopView] = {};
+    views[mobileView] = {};
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        plugins: [
-            FullCalendar.createPlugin(FullCalendar.DayGrid),
-            FullCalendar.createPlugin(FullCalendar.ICalendar),
-            FullCalendar.createPlugin(FullCalendar.List),
-        ],
         contentHeight: "auto",
         initialView: desktopView,
         // Add responsive views
@@ -92,14 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // requires js/parse_calendar.js to be run as a cron job on the server
         // only runs intermittently (calendars don't change often) and is more efficient
-        events: "/api/calendar.json",
-        // the "cheater" way to render the calendar by just grabbing the ics stream
-        // more power intensive as it will run on each page load
-        // events: {
-        //     // TODO: templatize this
-        //     url: "https://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics",
-        //     format: "ics",
-        // },
+        events: "/calendar.json",
         eventDisplay: "list-item",
         eventContent: renderEventContent,
         eventDidMount: function (ev) {

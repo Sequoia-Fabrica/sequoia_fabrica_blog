@@ -1,13 +1,10 @@
 {{ define "main" }}
-<!-- TODO: remove ical + icalendar in favor of calling js/parse_calendar on a cron job -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.19/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.19/index.global.min.js"></script>
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
-<script src="/js/render_calendar.js"></script>
+<script src="{{ .Site.BaseURL }}js/render_calendar.js"></script>
 
 {{- range first 1 (where .Data.Pages "Type" "homepage") -}}
 <main class="article {{ range .Params.categories }} {{ . | urlize }} {{ end }}">

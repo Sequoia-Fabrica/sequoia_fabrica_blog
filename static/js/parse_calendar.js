@@ -23,6 +23,7 @@ async function fetchAndParseICS(url) {
                     start: formatDate(currentEvent.DTSTART),
                     end: formatDate(currentEvent.DTEND),
                     allDay: isAllDay(currentEvent.DTSTART),
+                    url: currentEvent.URL
                 });
                 currentEvent = null;
             }
