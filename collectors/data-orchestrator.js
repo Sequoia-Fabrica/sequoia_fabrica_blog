@@ -46,9 +46,32 @@ async function writeFileAtomic(destPath, data) {
   const dir = path.dirname(destPath);
   const tmp = path.join(dir, `.tmp.${process.pid}.${Date.now()}`);
 
-  await ensureDirectoryExists(dir);
-  await fsp.writeFile(tmp, data);
-  await fsp.rename(tmp, destPath);
+  try {
+    await ensureDirectoryExists(dir);
+    
+    // Write temporary file
+    await fsp.writeFile(tmp, data, { mode: 0o644 });
+    
+    // Try to match ownership of existing file if it exists
+    try {
+      const destStat = await fsp.stat(destPath);
+      await fsp.chown(tmp, destStat.uid, destStat.gid);
+    } catch (e) {
+      // File doesn't exist yet, that's ok
+    }
+    
+    // Atomic rename
+    await fsp.rename(tmp, destPath);
+    
+  } catch (error) {
+    // Cleanup temp file on failure
+    try {
+      await fsp.unlink(tmp);
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+    throw error;
+  }
 }
 
 const safeFloat = (v, s = 1) => {
