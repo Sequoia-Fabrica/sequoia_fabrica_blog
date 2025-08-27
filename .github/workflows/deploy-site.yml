@@ -51,7 +51,7 @@ jobs:
       - name: rsync deploy
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -avzr --delete
+          switches: -avzr --delete --exclude='/api' --exclude='.git*'
           path: built-site/
           remote_path: /var/www/html/
           remote_host: sol.cloudforest-perch.ts.net
