@@ -5,9 +5,15 @@ function truncateString(str, maxLength) {
         return str.substring(0, maxLength - 3) + "...";
     }
 }
+
+/**
+ * Format time for display - FullCalendar uses UTC-coercion for named timezones
+ * @param {*} date - Date object from FullCalendar (UTC-coerced)
+ * @returns
+ */
 function formatTime(date) {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
 
     let formattedTime;
 
@@ -24,7 +30,8 @@ function formatTime(date) {
 
 function renderEventContent(eventInfo) {
     let isDayGridMonth = eventInfo.view.type == "dayGridMonth";
-    // additional <a> tag is because of a bug in FullCalendar: see https://github.com/fullcalendar/fullcalendar/issues/6133
+    // additional <a> tag is because of a bug in FullCalendar:
+    // see https://github.com/fullcalendar/fullcalendar/issues/6133
     let eventElement = `
             <div className="break-normal whitespace-normal">
             ${isDayGridMonth ? "" : `<a href=${eventInfo.event.url}></a>`}
@@ -67,6 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
     views[mobileView] = {};
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
+        timeZone: "America/Los_Angeles",
         contentHeight: "auto",
         initialView: desktopView,
         // Add responsive views
