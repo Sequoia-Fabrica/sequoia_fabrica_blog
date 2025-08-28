@@ -13,7 +13,7 @@
 							<div class="authors">
 							<span class="byline">Written by</span>
 							{{ range (.GetTerms "authors") }}
-									<span class="author"><a href="{{ .Permalink }}">{{ .Title }}</a></span>
+									<span class="author"><a href="{{ .Permalink }}">{{ .Name }}</a></span>
 							{{ end }}
 							</div>
 						{{ end }}

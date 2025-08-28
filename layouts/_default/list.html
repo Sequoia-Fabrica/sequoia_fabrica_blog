@@ -1,4 +1,4 @@
-{{ define "main" }} {{ $categoryTitle := .Title }} {{ $categoryDescription := ' ' }} 
+{{ define "main" }} {{ $categoryTitle := .Name }} {{ $categoryDescription := ' ' }}
 {{ if (eq .Data.Term "Low-tech Solutions") }} {{ $categoryTitle = i18n "lowtechtitle" }} 
 {{ $categoryDescription = i18n "lowtechdescription" | default "Interesting possibilities arise when you combine old technology with new knowledge and new materials, or when you apply old concepts and traditional knowledge to modern technology." }}
 {{ else if (eq .Data.Term "High-tech Problems")}} {{ $categoryTitle = i18n "hightechtitle" }} {{ $categoryDescription = i18n "hightechdescription" | default "Technology has become the idol of our society, but technological progress is—more often than not—aimed at solving problems caused by earlier technical inventions." }}
