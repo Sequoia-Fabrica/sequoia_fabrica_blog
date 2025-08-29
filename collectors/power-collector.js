@@ -129,25 +129,26 @@ async function getLatestESP32Metrics() {
     const data = await fsp.readFile(ESP32_LOG_PATH, "utf8");
     const lines = data.trim().split("\n");
     const lastLine = lines[lines.length - 1];
-    
+
     if (!lastLine) {
       return null;
     }
 
     const espMetrics = JSON.parse(lastLine);
-    
+
     // Return parsed ESP32 metrics
     // Format: {"ms": 264403221, "ts": "2025-08-26T05:33:09Z", "unsynced": true, 
-    //          "v": 13.29688, "i": -45.83979893, "p": -609.5260764, 
+    //          "v": 13.29688, "i": -0.04583979893, "p": -0.6095260764, 
     //          "sh_mV": -0.034379849, "q_C": -3324.947457, "e_J": -43369.46301, 
     //          "soc": 0.707640348, "status": "discharging"}
+    // Note: i is in A, p is in W, v is in V
     return {
       timestamp: espMetrics.ts,
       milliseconds: espMetrics.ms,
       unsynced: espMetrics.unsynced,
       v_V: espMetrics.v, // Battery voltage from shunt monitor
-      i_mA: espMetrics.i, // Current in mA
-      p_mW: espMetrics.p, // Power in mW 
+      i_mA: espMetrics.i * 1000, // Current in A, convert to mA
+      p_mW: espMetrics.p * 1000, // Power in W, convert to mW 
       sh_mV: espMetrics.sh_mV,
       q_C: espMetrics.q_C, // Charge in coulombs
       e_J: espMetrics.e_J, // Energy in joules
@@ -191,6 +192,7 @@ async function collectPowerMetrics() {
 
     // Calculate power metrics
     const p_in_W = ac.p_uW * 1e-6 * (1 - PMIC_LOSS_FRAC);
+    // Use AXP chip for current load since it accounts for leakage current
     const p_load_W = p_in_W > 0.5 ? p_in_W - axpBattery.p_uW * 1e-6 : -axpBattery.p_uW * 1e-6;
 
     // Create metrics record
@@ -202,7 +204,7 @@ async function collectPowerMetrics() {
       axp_batt_v_V: axpBattery.v_uV * 1e-6, // AXP20x battery voltage in V
       axp_batt_i_mA: axpBattery.i_uA * 1e-3, // AXP20x battery current in mA (positive = charging)
       axp_batt_p_mW: axpBattery.p_uW * 1e-3, // AXP20x battery power in mW
-      
+
       // ESP32 shunt monitor readings (if available)
       esp32_v_V: esp32Metrics ? esp32Metrics.v_V : null, // ESP32 shunt voltage in V
       esp32_i_mA: esp32Metrics ? esp32Metrics.i_mA : null, // ESP32 shunt current in mA

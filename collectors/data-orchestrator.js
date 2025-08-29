@@ -48,10 +48,10 @@ async function writeFileAtomic(destPath, data) {
 
   try {
     await ensureDirectoryExists(dir);
-    
+
     // Write temporary file
     await fsp.writeFile(tmp, data, { mode: 0o644 });
-    
+
     // Try to match ownership of existing file if it exists
     try {
       const destStat = await fsp.stat(destPath);
@@ -59,10 +59,10 @@ async function writeFileAtomic(destPath, data) {
     } catch (e) {
       // File doesn't exist yet, that's ok
     }
-    
+
     // Atomic rename
     await fsp.rename(tmp, destPath);
-    
+
   } catch (error) {
     // Cleanup temp file on failure
     try {
@@ -145,32 +145,17 @@ async function getSparklineDataFromPowerLog() {
         }
 
         const bucket = buckets.get(bucketTime);
-        // Legacy fields (for backward compatibility)
-        bucket.sums.v += safeFloat(entry.v, 1) || 0;
-        bucket.sums.i += safeFloat(entry.i, 1000) || 0; // mA to A  
-        bucket.sums.p += safeFloat(entry.p, 1000) || 0; // mW to W
+        // Legacy fields (for backward compatibility) - use new field names
+        bucket.sums.v += safeFloat(entry.esp32_v_V, 1) || 0; // ESP32 voltage for battery bus
+        bucket.sums.axp_v += safeFloat(entry.axp_batt_v_V, 1) || 0; // AXP voltage for power supply
+        bucket.sums.i += safeFloat(entry.esp32_i_mA, 1) || 0; // Keep in mA for frontend
+        bucket.sums.p += safeFloat(entry.esp32_p_mW, 1) || 0; // Keep in mW for frontend
         bucket.sums.soc += safeFloat(entry.soc, 1) * 100 || 0; // Main battery SOC (now ESP32-based) to percentage
-        bucket.sums.load_w += safeFloat(entry.load_w, 1) || 0;
+        bucket.sums.load_w += safeFloat(entry.load_W, 1) || 0; // Use AXP-calculated load power
         bucket.sums.cpu_temp += safeFloat(entry.cpu_temp_c, 1) || 0;
         bucket.sums.cpu_load += safeFloat(entry.cpu_load_15min, 1) || 0;
-        bucket.sums.axp_capacity += safeFloat(entry.axp_soc || entry.axp_capacity || entry.axp_batt_capacity, 1) * 100 || 0; // AXP SOC to percentage
-        
-        // ESP32 specific data
-        if (entry.esp32_v_V !== undefined) {
-          bucket.sums.esp32_v += safeFloat(entry.esp32_v_V, 1) || 0;
-          bucket.sums.esp32_i += safeFloat(entry.esp32_i_mA, 1000) || 0; // mA to A
-          bucket.sums.esp32_p += safeFloat(entry.esp32_p_mW, 1000) || 0; // mW to W
-          bucket.sums.esp32_soc += safeFloat(entry.esp32_soc, 1) * 100 || 0; // to percentage
-        }
-        
-        // AXP specific data  
-        if (entry.axp_batt_v_V !== undefined) {
-          bucket.sums.axp_v += safeFloat(entry.axp_batt_v_V, 1) || 0;
-          bucket.sums.axp_i += safeFloat(entry.axp_batt_i_mA, 1000) || 0; // mA to A
-          bucket.sums.axp_p += safeFloat(entry.axp_batt_p_mW, 1000) || 0; // mW to W
-          bucket.sums.axp_soc += safeFloat(entry.axp_soc, 1) * 100 || 0; // to percentage
-        }
-        
+        bucket.sums.axp_capacity += safeFloat(entry.axp_batt_capacity, 1) || 0; // AXP SOC to percentage
+
         bucket.count++;
       } catch (e) {
         continue; // Skip malformed entries
@@ -186,6 +171,9 @@ async function getSparklineDataFromPowerLog() {
       timestamps: sortedBuckets.map(([time]) => time),
       voltage: sortedBuckets.map(([, bucket]) =>
         bucket.count > 0 ? bucket.sums.v / bucket.count : 0
+      ),
+      voltageAxp: sortedBuckets.map(([, bucket]) =>
+        bucket.count > 0 ? bucket.sums.axp_v / bucket.count : 0
       ),
       currentDraw: sortedBuckets.map(([, bucket]) =>
         bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0
@@ -216,6 +204,7 @@ function createEmptySparklineData() {
   return {
     timestamps: [],
     voltage: [],
+    voltageAxp: [],
     currentDraw: [],
     powerUsage: [],
     mainBattery: [],
@@ -307,7 +296,7 @@ async function generateStatsJson() {
       axp_batt_v_V: axpBattV,
       axp_batt_i_mA: powerMetrics.axp_batt_i_mA || 0,
       axp_batt_i_A: powerMetrics.axp_batt_i_mA ? powerMetrics.axp_batt_i_mA / 1000 : 0,
-      
+
       // Battery metrics - ESP32 shunt monitor
       esp32_v_V: esp32V,
       esp32_i_mA: powerMetrics.esp32_i_mA || null,
