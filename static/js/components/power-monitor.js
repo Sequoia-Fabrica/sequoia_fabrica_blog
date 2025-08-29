@@ -60,7 +60,7 @@ class PowerMonitor {
     const loadW = this.safeNumber(data.load_W);
     const axpBattV = this.safeNumber(data.axp_batt_v_V);
     const shuntV = this.safeNumber(data.esp32_v_V);
-    const loadA = this.safeNumber(data.esp32_i_mA) * 1e-3;
+    const loadA = this.safeNumber(data.esp32_i_mA);
     const socPct = this.safeInt(data.soc_pct);
     const cpuTemp = data.cpu_temp_c;
     const cpuLoad = data.cpu_load_15min;
@@ -79,42 +79,42 @@ class PowerMonitor {
       [
         "Current draw",
         (this.isPresent(loadA) ? this.formatUnit(loadA, "mA", 4) : "—") +
-          (this.isPresent(loadA) ? this.createSparklineSVG(sparklines.currentDraw) : ""),
+        (this.isPresent(loadA) ? this.createSparklineSVG(sparklines.currentDraw) : ""),
       ],
       [
         "Voltage (power supply)",
         (this.isPresent(axpBattV) ? this.formatUnit(axpBattV, "V") : "—") +
-          (this.isPresent(axpBattV) ? this.createSparklineSVG(sparklines.voltage) : ""),
+        (this.isPresent(axpBattV) ? this.createSparklineSVG(sparklines.voltageAxp) : ""),
       ],
       [
         "Voltage (battery bus)",
         (this.isPresent(shuntV) ? this.formatUnit(shuntV, "V") : "—") +
-          (this.isPresent(shuntV) ? this.createSparklineSVG(sparklines.voltage) : ""),
+        (this.isPresent(shuntV) ? this.createSparklineSVG(sparklines.voltage) : ""),
       ],
       [
         "CPU temperature",
         (this.isPresent(data.fmt?.cpu?.temp) ? `${data.fmt.cpu.temp}` : "—") +
-          (this.isPresent(cpuTemp) ? this.createSparklineSVG(sparklines.cpuTemp) : ""),
+        (this.isPresent(cpuTemp) ? this.createSparklineSVG(sparklines.cpuTemp) : ""),
       ],
       [
         "CPU load average *",
         (this.isPresent(data.fmt?.cpu?.load_15min)
           ? `${data.fmt.cpu.load_15min}%`
           : "—") +
-          (this.isPresent(cpuLoad) ? this.createSparklineSVG(sparklines.cpuLoad) : ""),
+        (this.isPresent(cpuLoad) ? this.createSparklineSVG(sparklines.cpuLoad) : ""),
       ],
       ["Status", this.styleStatus(data.fmt?.status || "—")],
       [
         "Main battery SOC",
         (this.isPresent(data.fmt?.soc) ? this.stylePercentage(data.fmt.soc) : "—") +
-          (socPct ? this.createSparklineSVG(sparklines.mainBattery) : ""),
+        (socPct ? this.createSparklineSVG(sparklines.mainBattery) : ""),
       ],
       [
         "Backup battery SOC",
         (this.isPresent(data.fmt?.axp_batt?.capacity)
           ? this.stylePercentage(data.fmt.axp_batt.capacity)
           : "—") +
-          (backupSoc ? this.createSparklineSVG(sparklines.backupBattery) : ""),
+        (backupSoc ? this.createSparklineSVG(sparklines.backupBattery) : ""),
       ],
     ];
 
@@ -204,7 +204,7 @@ class PowerMonitor {
       // Set up auto-refresh only on power page
       if (window.location.pathname.includes("/power/")) {
         this.startAutoRefresh();
-        
+
         // Clean up on page unload
         window.addEventListener("beforeunload", () => {
           this.stopAutoRefresh();
