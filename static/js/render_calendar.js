@@ -5,9 +5,15 @@ function truncateString(str, maxLength) {
         return str.substring(0, maxLength - 3) + "...";
     }
 }
+
+/**
+ * Format time for display - FullCalendar uses UTC-coercion for named timezones
+ * @param {*} date - Date object from FullCalendar (UTC-coerced)
+ * @returns
+ */
 function formatTime(date) {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
 
     let formattedTime;
 
@@ -24,10 +30,11 @@ function formatTime(date) {
 
 function renderEventContent(eventInfo) {
     let isDayGridMonth = eventInfo.view.type == "dayGridMonth";
-    // additional <a> tag is because of a bug in FullCalendar: see https://github.com/fullcalendar/fullcalendar/issues/6133
+    // additional <a> tag is because of a bug in FullCalendar:
+    // see https://github.com/fullcalendar/fullcalendar/issues/6133
     let eventElement = `
             <div className="break-normal whitespace-normal">
-            ${isDayGridMonth ? "" : "<a href={eventInfo.event.url}></a>"}
+            ${isDayGridMonth ? "" : `<a href=${eventInfo.event.url}></a>`}
                 <b>
                     ${formatTime(
                         eventInfo.event.start ? eventInfo.event.start : null
@@ -59,28 +66,37 @@ function renderEventContent(eventInfo) {
 
 document.addEventListener("DOMContentLoaded", function () {
     const calendarEl = document.getElementById("calendar-view");
+    const desktopView = "dayGridMonth";
+    const mobileView = "listWeek";
+    const mobileBreakpoint = 768; // pixels
+    const views = {};
+    views[desktopView] = {};
+    views[mobileView] = {};
+
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        plugins: [
-            FullCalendar.createPlugin(FullCalendar.DayGrid),
-            FullCalendar.createPlugin(FullCalendar.ICalendar),
-        ],
+        timeZone: "America/Los_Angeles",
         contentHeight: "auto",
-        initialView: "dayGridMonth",
+        initialView: desktopView,
+        // Add responsive views
+        views,
         headerToolbar: {
             left: "prev",
             center: "title",
             right: "next",
         },
+
+        // Add window resize handler for responsive behavior
+        windowResize: function (view) {
+            if (window.innerWidth < mobileBreakpoint) {
+                calendar.changeView(mobileView);
+            } else {
+                calendar.changeView(desktopView);
+            }
+        },
+
         // requires js/parse_calendar.js to be run as a cron job on the server
         // only runs intermittently (calendars don't change often) and is more efficient
-        events: '/api/calendar.json',
-        // the "cheater" way to render the calendar by just grabbing the ics stream
-        // more power intensive as it will run on each page load
-        // events: {
-        //     // TODO: templatize this
-        //     url: "https://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics",
-        //     format: "ics",
-        // },
+        events: "/calendar.json",
         eventDisplay: "list-item",
         eventContent: renderEventContent,
         eventDidMount: function (ev) {
@@ -106,5 +122,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
     });
+
+    // Set initial view based on screen size
+    if (window.innerWidth < mobileBreakpoint) {
+        calendar.changeView(mobileView);
+    }
+
     calendar.render();
 });

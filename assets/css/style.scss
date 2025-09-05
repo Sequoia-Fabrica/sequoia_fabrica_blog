@@ -52,7 +52,7 @@
     --font-large: 1.55rem;
     --font-medium: 1.15rem;
     --font-body: 1rem;
-    --font-small: 0.6rem;
+    --font-small: 0.75rem;
     --max-img-width: 1040px;
     --max-content-width: 55rem;
     --content-width: 80%;
@@ -194,7 +194,7 @@ a {
 }
 
 code {
-    font-size: (0.9em);
+    font-size: 0.9em;
     color: var(--color-sub);
     background-color: var(--color-code);
     padding: 0.2em;
@@ -336,6 +336,8 @@ a:hover {
 /*-----------
 CATEGORY COLORS
 -----------*/
+
+// TODO: update these when we have our _own_ categories
 
 [data-nav="low-tech-solutions"],
 li.low-tech-solutions .category,
@@ -798,15 +800,13 @@ figure,
     h3 {
         font-size: var(--font-medium);
         font-style: italic;
+        margin: calc(4 * var(--pad)) auto 0;
     }
     h4 {
         font-size: var(--font-body);
         font-style: italic;
         // text-transform: uppercase;
         // letter-spacing: 1px;
-    }
-    h3 {
-        margin: calc(4 * var(--pad)) auto 0;
     }
     h4,
     p,
@@ -933,7 +933,6 @@ figure {
             fill: var(--color-sub);
         }
         & + .imgindicator {
-            // position: absolute;
             visibility: visible;
         }
     }
@@ -1315,18 +1314,18 @@ footer .weather_text {
         @include media(tablet) {
             margin-left: 0;
         }
-        
+
         // Status value styling
         .status-good {
             color: var(--color-sub);
             font-weight: 500;
         }
-        
+
         .status-full {
             color: var(--color-sub);
             font-weight: 500;
         }
-        
+
         .status-percentage {
             color: var(--color-sub);
             font-weight: 500;
@@ -1368,6 +1367,9 @@ Global Responsive Styles
 ------------*/
 
 @include media(tablet) {
+    :root {
+        --font-small: 0.65rem;
+    }
     html {
         font-size: 18px;
     }
@@ -1432,6 +1434,7 @@ Global Responsive Styles
         --font-xlarge: 2rem;
         --font-large: 1.4rem;
         --font-medium: 1.2rem;
+        --font-small: 1rem;
     }
     html {
         font-size: 16px;
@@ -1468,7 +1471,7 @@ Global Responsive Styles
 // -- calendar view --
 .fc {
     .fc-toolbar-title {
-        font-size: 1.5em;
+        font-size: var(--font-large);
         width: auto;
     }
     margin: 1em;
@@ -1476,8 +1479,26 @@ Global Responsive Styles
 
 .fc-toolbar.fc-header-toolbar {
     margin-bottom: 1.5em;
-    width: var(--max-content-width);
+    width: 100%;
+    max-width: var(--max-content-width);
     align-self: center;
+}
+
+.fc-daygrid-day-number {
+    font-size: var(--font-small);
+}
+
+.fc table {
+    margin: auto;
+    // override the theme table settings
+    th:first-child,
+    td:first-child,
+    td {
+        padding: 8px 5px;
+    }
+    th[role="presentation"] {
+        padding-bottom: 0;
+    }
 }
 
 :root {
@@ -1488,7 +1509,9 @@ Global Responsive Styles
     .fc-button-primary {
         color: var(--color-links);
     }
-
+    --fc-page-bg-color: var(--color-icons-lines);
+    --fc-neutral-bg-color: none;
+    --fc-small-font-size: var(--font-small);
     --fc-border-color: var(--color-icons-lines);
     --fc-event-border-color: var(--color-icons-lines);
     --fc-button-bg-color: none;
