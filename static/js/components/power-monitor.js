@@ -59,63 +59,82 @@ class PowerMonitor {
   }
 
   // ----- Robust current normalization (mA, signed) -----
+  // ----- Robust current normalization (mA, signed) -----
   normalizeCurrent(data) {
     const n = (x) => (Number.isFinite(+x) ? +x : NaN);
 
-    // Preferred: INA228 current in mA
-    let i_mA = n(data.esp32_i_mA);
+    // helpers
+    const pickBusV = () => {
+      const v1 = n(data.esp32_v_V);
+      if (Number.isFinite(v1) && v1 > 0) return v1;
+      const v2 = n(data.axp_batt_v_V);
+      if (Number.isFinite(v2) && v2 > 0) return v2;
+      const v3 = n(data.ac_V);
+      return Number.isFinite(v3) && v3 > 0 ? v3 : NaN;
+    };
 
-    // Fallback 1: derive from ESP shunt power/voltage (p[mW]/v[V] -> mA)
-    if (!Number.isFinite(i_mA)) {
-      const p_mW = n(data.esp32_p_mW);
-      const v_V = n(data.esp32_v_V);
-      if (Number.isFinite(p_mW) && Number.isFinite(v_V) && v_V > 0) {
-        i_mA = p_mW / v_V;
-      }
+    let i_mA = n(data.esp32_i_mA);
+    const p_mW = n(data.esp32_p_mW);
+    const v_V = pickBusV();
+    const load_W = n(data.load_W);
+
+    // Fallback A: derive from ESP power/voltage (p[mW]/v[V] -> mA)
+    if (
+      !Number.isFinite(i_mA) &&
+      Number.isFinite(p_mW) &&
+      Number.isFinite(v_V)
+    ) {
+      i_mA = p_mW / v_V; // signed mA
     }
 
-    // Fallback 2: AXP20x CURRENT_NOW is typically in µA -> convert to mA
+    // Fallback B: AXP CURRENT_NOW in µA -> mA
     if (!Number.isFinite(i_mA)) {
       const axp_uA = n(data.axp_current_uA);
       if (Number.isFinite(axp_uA)) i_mA = axp_uA / 1000.0;
     }
 
-    // Fallback 3: derive from total load_W and bus voltage (assume discharge negative)
-    if (!Number.isFinite(i_mA)) {
-      const load_W = n(data.load_W);
-      const v_V = n(data.esp32_v_V) || n(data.axp_batt_v_V);
-      if (Number.isFinite(load_W) && Number.isFinite(v_V) && v_V > 0) {
-        i_mA = -(load_W / v_V) * 1000.0;
-      }
+    // Fallback C: derive from total load_W and bus voltage (assume discharge negative)
+    if (
+      !Number.isFinite(i_mA) &&
+      Number.isFinite(load_W) &&
+      Number.isFinite(v_V)
+    ) {
+      i_mA = -(load_W / v_V) * 1000.0;
     }
 
-    // Guard A: if |i| is absurd (>10 A) but we have sane p & v, recompute from p/v
-    const p_mW2 = n(data.esp32_p_mW);
-    const v_V2 = n(data.esp32_v_V);
+    // Guard 1: if |i| is absurd (>10 A) and p/v are sane, recompute from p/v
     if (
       Number.isFinite(i_mA) &&
       Math.abs(i_mA) > 10000 &&
-      Number.isFinite(p_mW2) &&
-      Number.isFinite(v_V2) &&
-      v_V2 > 0
+      Number.isFinite(p_mW) &&
+      Number.isFinite(v_V)
     ) {
-      i_mA = p_mW2 / v_V2; // mA, signed
+      i_mA = p_mW / v_V;
     }
 
-    // Guard B: cross-check INA power vs. AXP load; if >4× apart, trust load_W and derive
-    const load_W2 = n(data.load_W);
+    // Guard 2: cross-check INA power vs AXP load; if >4× apart, trust load_W and derive
     if (
-      Number.isFinite(p_mW2) &&
-      Number.isFinite(v_V2) &&
-      v_V2 > 0 &&
-      Number.isFinite(load_W2)
+      Number.isFinite(i_mA) &&
+      Number.isFinite(p_mW) &&
+      Number.isFinite(v_V) &&
+      Number.isFinite(load_W)
     ) {
-      const ina_W = Math.abs(p_mW2) / 1000;
-      const floorW = Math.max(load_W2, 0.5); // avoid tiny denominators
+      const ina_W = Math.abs(p_mW) / 1000.0;
+      const floorW = Math.max(load_W, 0.5); // avoid tiny denominators
       if (ina_W > 4 * floorW) {
-        const alt_mA = -(load_W2 / v_V2) * 1000.0;
+        const alt_mA = -(load_W / v_V) * 1000.0; // discharge negative
         if (Number.isFinite(alt_mA)) i_mA = alt_mA;
       }
+    }
+
+    // Guard 3 (new): even if p_mW is missing, if |i| is absurd and we have load_W & V, override from load/V
+    if (
+      Number.isFinite(i_mA) &&
+      Math.abs(i_mA) > 10000 &&
+      Number.isFinite(load_W) &&
+      Number.isFinite(v_V)
+    ) {
+      i_mA = -(load_W / v_V) * 1000.0;
     }
 
     return Number.isFinite(i_mA) ? i_mA : NaN;
