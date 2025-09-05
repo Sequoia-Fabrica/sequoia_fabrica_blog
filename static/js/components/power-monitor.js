@@ -58,7 +58,7 @@ class PowerMonitor {
     </svg>`;
   }
 
-  // ----- NEW: robust current normalization (mA, signed) -----
+  // ----- Robust current normalization (mA, signed) -----
   normalizeCurrent(data) {
     const n = (x) => (Number.isFinite(+x) ? +x : NaN);
 
@@ -80,17 +80,16 @@ class PowerMonitor {
       if (Number.isFinite(axp_uA)) i_mA = axp_uA / 1000.0;
     }
 
-    // Fallback 3: derive from total load_W and bus voltage (sign unavailable; assume discharge negative)
+    // Fallback 3: derive from total load_W and bus voltage (assume discharge negative)
     if (!Number.isFinite(i_mA)) {
       const load_W = n(data.load_W);
       const v_V = n(data.esp32_v_V) || n(data.axp_batt_v_V);
       if (Number.isFinite(load_W) && Number.isFinite(v_V) && v_V > 0) {
-        // Assume this is battery-supplied; negative sign = discharge
         i_mA = -(load_W / v_V) * 1000.0;
       }
     }
 
-    // Sanity: if |i| is absurd (>10A) but we have sane p & v, recompute from p/v
+    // Guard A: if |i| is absurd (>10 A) but we have sane p & v, recompute from p/v
     const p_mW2 = n(data.esp32_p_mW);
     const v_V2 = n(data.esp32_v_V);
     if (
@@ -103,10 +102,26 @@ class PowerMonitor {
       i_mA = p_mW2 / v_V2; // mA, signed
     }
 
+    // Guard B: cross-check INA power vs. AXP load; if >4× apart, trust load_W and derive
+    const load_W2 = n(data.load_W);
+    if (
+      Number.isFinite(p_mW2) &&
+      Number.isFinite(v_V2) &&
+      v_V2 > 0 &&
+      Number.isFinite(load_W2)
+    ) {
+      const ina_W = Math.abs(p_mW2) / 1000;
+      const floorW = Math.max(load_W2, 0.5); // avoid tiny denominators
+      if (ina_W > 4 * floorW) {
+        const alt_mA = -(load_W2 / v_V2) * 1000.0;
+        if (Number.isFinite(alt_mA)) i_mA = alt_mA;
+      }
+    }
+
     return Number.isFinite(i_mA) ? i_mA : NaN;
   }
 
-  // ----- NEW: nicer current formatting -----
+  // ----- Nicer current formatting -----
   formatCurrent(mA, decimalsA = 2) {
     if (!Number.isFinite(mA)) return "—";
     const sign = mA < 0 ? "-" : "";
@@ -119,7 +134,7 @@ class PowerMonitor {
     const loadW = this.safeNumber(data.load_W);
     const axpBattV = this.safeNumber(data.axp_batt_v_V);
     const shuntV = this.safeNumber(data.esp32_v_V);
-    const i_mA = this.normalizeCurrent(data); // <-- use normalized current
+    const i_mA = this.normalizeCurrent(data); // use normalized current
     const socPct = this.safeInt(data.soc_pct);
     const cpuTemp = data.cpu_temp_c;
     const cpuLoad = data.cpu_load_15min;
