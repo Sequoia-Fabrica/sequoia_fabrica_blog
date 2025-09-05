@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // requires js/parse_calendar.js to be run as a cron job on the server
         // only runs intermittently (calendars don't change often) and is more efficient
-        events: "/calendar.json",
+        events: "/api/calendar.json",
         eventDisplay: "list-item",
         eventContent: renderEventContent,
         eventDidMount: function (ev) {
