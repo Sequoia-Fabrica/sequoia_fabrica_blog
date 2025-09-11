@@ -53,7 +53,9 @@ function renderEventContent(eventInfo) {
         `;
 
     if (isDayGridMonth) {
-        const uuid = self.crypto.randomUUID();
+        // make a pretty decent alpha numeric uuid string
+        // https://stackoverflow.com/a/8084248
+        const uuid = Math.random().toString(36).substr(2, 9);
         const popoverId = `popover-${uuid}`;
         eventElement = `
             <div class="popover" id="${popoverId}">
