@@ -16,7 +16,7 @@ Our organization was founded November 2023. We are supported by donations and me
 
 ## What We Offer 
 
-* Weekly [classes and events](/events), open to the public, on subjects including arts, crafts, technology, and tools. 
+* Weekly [classes and events](https://bookwhen.com/sequoiafabrica), open to the public, on subjects including arts, crafts, technology, and tools.
 * Affordable [memberships](/membership), access to equipment and infrastructure for learning, arts, prototyping and creative projects.
 * Physical space for exhibitions, meetups, community and educational events.
 
@@ -40,7 +40,7 @@ Our community has a strong emphasis on fiber arts, and a range of other interest
 
 ## Why We Do What We Do
 
-To build great things, you need good [tools]({{<param wiki>}}) and good community. Sequoia Fabrica offers both! In the tradition of [makerspaces](https://www.makerspaces.com/what-is-a-makerspace/) and [hackerspaces](https://hackerspaces.org), we offer shared access to high-quality tools and machinery in an environment where learning, sharing, and building together is the norm. 
+To build great things, you need good [tools](https://wiki.sequoiafabrica.org/) and good community. Sequoia Fabrica offers both! In the tradition of [makerspaces](https://www.makerspaces.com/what-is-a-makerspace/) and [hackerspaces](https://hackerspaces.org), we offer shared access to high-quality tools and machinery in an environment where learning, sharing, and building together is the norm.
 
 We believe in the transformative power of access to tools and technology. Our mission is to democratize the ability to create, innovate, and explore artistic and scientific realms including but not limited to: Fine Arts, Electronics, Sewing and Woodcrafts. 
 

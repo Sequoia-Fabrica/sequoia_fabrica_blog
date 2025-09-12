@@ -1,118 +1,123 @@
 baseURL = '/'
 languageCode = 'en-us'
 title = 'Sequoia Fabrica Makerspace'
-
 buildFuture = true
 buildDrafts = false
 pagination.pagerSize = 12
-
 DefaultContentLanguage = 'en'
 defaultContentLanguage = 'en'
 pluralizelisttitles = 'false'
-
 refLinksErrorLevel = 'WARNING'
 refLinksNotFoundURL = '/'
-
 relativeURLs = true
 canonifyURLs = true
-
 timeout = 60000
-
 rssLimit = 3
-
 enableInlineShortcodes = true
-
-summaryLength=0
+summaryLength = 0
 
 [markup]
-  [markup.goldmark.renderer]
-    unsafe = true
-  [markup.goldmark.parser.attribute]
-    block = true
-  [markup.highlight]
-    anchorLineNos = false
-    codeFences = true
-    guessSyntax = false
-    hl_Lines = ''
-    hl_inline = false
-    lineAnchors = ''
-    lineNoStart = 1
-    lineNos = false
-    lineNumbersInTable = true
-    noClasses = true
-    noHl = false
-    style = 'onesenterprise'
-    tabWidth = 4
+
+[markup.goldmark.renderer]
+unsafe = true
+
+[markup.goldmark.parser.attribute]
+block = true
+
+[markup.goldmark.extensions]
+typographer = false # turn off the typographer that turns "" into curly quotes; -- into emdash, but also does bad escaping of ...
+
+[markup.highlight]
+anchorLineNos = false
+codeFences = true
+guessSyntax = false
+hl_Lines = ''
+hl_inline = false
+lineAnchors = ''
+lineNoStart = 1
+lineNos = false
+lineNumbersInTable = true
+noClasses = true
+noHl = false
+style = 'onesenterprise'
+tabWidth = 4
 
 [permalinks]
-  posts = '/:year/:month/:slugorfilename/'
-  categories = '/:slug/'
+posts = '/:year/:month/:slugorfilename/'
+categories = '/:slug/'
 
 [params]
-  author = 'Camille Teicheira'
-  newsletter = 'https://dashboard.mailerlite.com/forms/1197290/139047052633965606/share'
-  description = 'A volunteer-run, membership-based, community workshop in San Francisco.'
-  donate = 'https://opencollective.com/sequoia-fabrica'
-  events = 'https://bookwhen.com/sequoiafabrica#focus=ev-s5jb-20250313160000'
-  wiki = 'https://wiki.sequoiafabrica.org/wiki/Main_Page'
-  email = 'info@sequoiafabrica.org'
-  mastadon = 'https://sfba.social/@sequoiafabrica'
-  instagram = 'https://www.instagram.com/sequoia.fabrica'
-  tiktok = 'https://www.tiktok.com/@sequoiafabrica'
+author = 'Camille Teicheira'
+newsletter = 'https://dashboard.mailerlite.com/forms/1197290/139047052633965606/share'
+description = 'A volunteer-run, membership-based, community workshop in San Francisco.'
+donate = 'https://opencollective.com/sequoia-fabrica'
+events = 'https://bookwhen.com/sequoiafabrica#focus=ev-s5jb-20250313160000'
+wiki = 'https://wiki.sequoiafabrica.org/wiki/Main_Page'
+email = 'info@sequoiafabrica.org'
+mastodon = 'https://sfba.social/@sequoiafabrica'
+instagram = 'https://www.instagram.com/sequoia.fabrica'
+tiktok = 'https://www.tiktok.com/@sequoiafabrica'
 
 [menu]
-  [[menu.main]]
-    identifier = 'about'
-    name = 'About'
-    url = '/about'
-    weight = 1
-  [[menu.main]]
-    identifier = 'events'
-    name = 'Events'
-    url = 'https://bookwhen.com/sequoiafabrica'
-    weight = 2
-  [[menu.main]]
-    identifier = 'donate'
-    name = 'Donate'
-    url = 'https://opencollective.com/sequoia-fabrica'
-    weight = 3
-  [[menu.main]]
-    identifier = 'membership'
-    name = 'Membership'
-    url = '/membership'
-    weight = 4
-  [[menu.main]]
-    identifier = 'faq'
-    name = 'FAQ'
-    url = '/faq'
-    weight = 5
-  [[menu.main]]
-    identifier = 'partner'
-    name = 'Partner'
-    url = '/partner'
-    weight = 6
-  [[menu.main]]
-    identifier = 'contact'
-    name = 'Contact'
-    url = '/contact'
-    weight = 7
-  [[menu.main]]
-    identifier = 'blog'
-    name = 'Blog'
-    url = '/posts'
-    weight = 8
 
+[[menu.main]]
+identifier = 'about'
+name = 'About'
+url = '/about'
+weight = 1
+
+[[menu.main]]
+identifier = 'membership'
+name = 'Membership'
+url = '/membership'
+weight = 2
+
+[[menu.main]]
+identifier = 'blog'
+name = 'Blog'
+url = '/posts'
+weight = 3
+
+[[menu.main]]
+identifier = 'faq'
+name = 'FAQ'
+url = '/faq'
+weight = 4
+
+[[menu.main]]
+identifier = 'partner'
+name = 'Partner'
+url = '/partner'
+weight = 5
+
+[[menu.main]]
+identifier = 'contact'
+name = 'Contact'
+url = '/contact'
+weight = 6
+
+[[menu.main]]
+identifier = 'events'
+name = 'Events↗︎'
+url = 'https://bookwhen.com/sequoiafabrica'
+weight = 7
+
+[[menu.main]]
+identifier = 'donate'
+name = 'Donate↗︎'
+url = 'https://opencollective.com/sequoia-fabrica'
+weight = 8
 
 [taxonomies]
-  author = 'authors'
-  tag = 'tags'
-  category = 'categories'
+author = 'authors'
+tag = 'tags'
+category = 'categories'
 
 [related]
-  includeNewer = true
-  threshold = 80
-  toLower = false
-  [[related.indices]]
-    name = 'tags'
-    weight = 100
+includeNewer = true
+threshold = 80
+toLower = false
 
+[[related.indices]]
+name = 'tags'
+weight = 100

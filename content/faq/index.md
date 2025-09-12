@@ -33,7 +33,7 @@ Our facility is at sidewalk level, please enter through the glass double doors.
 
 ## How can I access the space?
 
-The makerspace is open to the general public for regular, hosted [events and workshops]({{< param Events >}}). Anyone is welcome to sign up and attend these! RSVP is required, unless stated.
+The makerspace is open to the general public for regular, hosted [events and workshops](param:events). Anyone is welcome to sign up and attend these! RSVP is required, unless stated.
  
 If you’d like access to the facility or to use equipment at other times, you must [become a member](/membership) or [volunteer](https://wiki.sequoiafabrica.org/wiki/Volunteers)!
 
@@ -41,7 +41,7 @@ If this model does not meet your needs, there are many [makerspaces in the Bay A
 
 ## What tools do you have?
 
-Tools are regularly changing. For a full list, [see our wiki]({{< param Wiki >}}).
+Tools are regularly changing. For a full list, [see our wiki](param:wiki).
 Below is an abridged list of some tools.
 
 **Textiles:**
@@ -69,11 +69,11 @@ Cricut Vinyl Cutter.
 
 Our workshop is run by volunteers and we typically do not have the capacity to schedule one-off tours.
 
-If you'd like to see the space please [sign up for an event]({{< param Wiki >}}). If you're an organization looking to partner, please [reach out to us](/contact). 
+If you'd like to see the space please [sign up for an event](param:wiki). If you're an organization looking to partner, please [reach out to us](/contact).
 
 ## When will you have a class on _{some topic}_?
 
-Instructors are volunteers, so classes vary by month and are added weekly! 
+Instructors are volunteers, so classes vary by month and are added weekly.
 
 If a class is sold out, join the waiting list. This helps us gauge demand, we'll reach out if we add a new session.
 
@@ -85,23 +85,23 @@ All prospective members should visit our space, complete an application, and sig
 
 Members are responsible for contributing to the upkeep of our shared space. Hosting classes is encouraged, you don’t need to be a subject matter expert!
 
-Please review our [membership page](/membership) for more information! 
+Please review our [membership page](/membership) for more information.
 
-You must be 18 years of age or older to become a member. Members may bring family members or friends as their guests. 
+You must be 18 years of age or older to become a member. Members may bring family members or friends as their guests.
 
 ## How much does membership cost?
 
 Monthly dues are similar to other Bay Area workshops, $100-150 a month.
 
-We would like to offer more flexible dues in the future, provided we can find a funding source and meet all expenses. 
+We would like to offer more flexible dues in the future, provided we can find a funding source and meet all expenses.
 
 Sequoia Fabrica also has a [volunteer program](https://wiki.sequoiafabrica.org/wiki/Volunteers).
 
 ## Can I bring my kids?
 
-Children are welcome under supervision of a parent or guardian. 
+Children are welcome under supervision of a parent or guardian.
 
-We offer some events and classes specifically for families. 
+We offer some events and classes specifically for families.
 
 Parents who are members are welcome to work on projects with their children and bring them to the workshop. Children can not be members or visit the workshop by themselves.
 
@@ -115,26 +115,26 @@ At this time the workshop is not setup for pets, but we hope to offer some pet f
 
 ## Can I take a class at Sequoia Fabrica if I can't afford a workshop fee?
 
-Yes, scholarships are available for classes. Please [fill out our form](https://docs.google.com/forms/d/e/1FAIpQLSdonL4v1x9dH1AuiRgIyt6F1elsod1s6vr-j0P11x7uMpq4pg/viewform). 
+Yes, scholarships are available for classes. Please [fill out our form](https://docs.google.com/forms/d/e/1FAIpQLSdonL4v1x9dH1AuiRgIyt6F1elsod1s6vr-j0P11x7uMpq4pg/viewform).
 
 ## **Are you a non-profit? 501(c)(3)?**
 
 Yes. Sequoia Fabrica is a California Public Benefit Corporation and the IRS has determined it is a public charity under IRC Section 501(c)(3). Donations are tax-deductable for federal purposes to the extent allowed by law.
 
-You can [view the final determination letter here](https://static.miraheze.org/sequoiafabricawiki/8/86/FinalLetter_93-4496044_SEQUOIAFABRICA_01132024_00.pdf).  
+You can [view the final determination letter here](https://static.miraheze.org/sequoiafabricawiki/8/86/FinalLetter_93-4496044_SEQUOIAFABRICA_01132024_00.pdf).
 
 EIN: 93-4496044
 
 ## Do you accept in kind donations?
 
-With prior arrangement. Please email us at [sequoiafabrica@gmail.com](mailto:sequoiafabrica@gmail.com) with what you'd like to donate. Sequoia Fabrica maintains a [list](https://wiki.sequoiafabrica.org/wiki/Equipment_Needs) of equipment we are looking for! We can provide a receipt for your in-kind donation upon request. 
+With prior arrangement. Please email us at [sequoiafabrica@gmail.com](mailto:sequoiafabrica@gmail.com) with what you'd like to donate. Sequoia Fabrica maintains a [list](https://wiki.sequoiafabrica.org/wiki/Equipment_Needs) of equipment we are looking for! We can provide a receipt for your in-kind donation upon request.
 
 If you have something you'd like to loan long-term to Sequoia Fabrica, we've [got a form](https://docs.google.com/forms/d/e/1FAIpQLSfkrRbrPWCJe-pVXQRyJ7k1nDh0zrLgVVYZIwJPtpxaV6SVlg/viewform?usp=sf_link) for that!
 Loans are not tax-deductible, and we cannot promise the equipment will remain in the state it was when you loaned it.
 
 ## Why did you start another space?
 
-San Francisco needs more workshops and 2023-24 is a window of opportunity for non-profits and arts organizations to find affordable space in the city. 
+San Francisco needs more workshops and 2023-24 is a window of opportunity for non-profits and arts organizations to find affordable space in the city.
 
 Our organization offers:
 
@@ -146,12 +146,12 @@ Our organization offers:
 
 ## Why did you choose the name Sequoia Fabrica?
 
-Sequoia refers to the iconic California redwood tree. These trees grow from a tiny seed and are among the largest and oldest living organisms on Earth. We hope from our modest beginnings to create a community that lasts and thrives. 
+Sequoia refers to the iconic California redwood tree. These trees grow from a tiny seed and are among the largest and oldest living organisms on Earth. We hope from our modest beginnings to create a community that lasts and thrives.
 
-Fabrica comes from the Latin word meaning workshop or factory. It also evokes fabric, fibers woven together to form a whole. Our workshop is a place where people come together across disciplines to build, learn, create, and make things with hands and machines. 
+Fabrica comes from the Latin word meaning workshop or factory. It also evokes fabric, fibers woven together to form a whole. Our workshop is a place where people come together across disciplines to build, learn, create, and make things with hands and machines.
 
 Conveniently, our initials are S.F.
 
 ## What is a Grove?
 
-A [Grove](https://wiki.sequoiafabrica.org/wiki/Grove) is the term we use to describe smaller interest groups of maintainers and organizers within Sequoia Fabrica. Individuals will join a Grove that relates to their interests and the tools they use, such as electronics, sewing, or woodcraft. If it does not yet exist, they can lobby the community to start a new Grove. 
+A [Grove](https://wiki.sequoiafabrica.org/wiki/Grove) is the term we use to describe smaller interest groups of maintainers and organizers within Sequoia Fabrica. Individuals will join a Grove that relates to their interests and the tools they use, such as electronics, sewing, or woodcraft. If it does not yet exist, they can lobby the community to start a new Grove.

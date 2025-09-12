@@ -1,11 +1,9 @@
 ---
 title: "Partnerships"
-summary: "How to partner with Sequoia Fabrica"
 slug: "partner"
 url: "partner"
 featured_image: ""
 ---
-
 
 Reach out to us at <a href="mailto:{{< param email >}}">{{< param email >}}</a> and let's discuss how we can make something amazing together!
 

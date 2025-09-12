@@ -10,16 +10,14 @@
 <main class="article {{ range .Params.categories }} {{ . | urlize }} {{ end }}">
     <article id="{{ .Title | urlize }}">
         <section id="content" class="article">
+            {{ if or .Title .Summary }}
             <header class="entry-header">
                 <h1 class="entry-title">{{ .Title }}</h1>
                 <p class="summary">{{ .Summary }}</p>
             </header>
-
-            <div class="entry-content">
-                {{ .Content }}
-            </div>
+            {{end}}
+            <div class="entry-content">{{ .Content }}</div>
         </section>
     </article>
 </main>
-{{ end }}
-{{ end }}
+{{ end }} {{ end }}
