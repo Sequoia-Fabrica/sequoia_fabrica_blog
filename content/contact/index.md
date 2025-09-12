@@ -1,13 +1,16 @@
 ---
 title: "Contact"
-summary: "Get in touch with Sequoia Fabrica Makerspace."
 slug: contact
 categories: [""]
 featured_image: ""
 url: "contact"
 ---
 
-Sequoia Fabrica run by members and volunteers. If you need to contact the board of directors, you can send an email to <a href="mailto:{{< param email >}}">{{< param email >}}</a>
+Sequoia Fabrica is run by members and volunteers. If you need to contact the board of directors, you can send an email to <a href="mailto:{{< param email >}}">{{< param email >}}</a>.
+
+## Visit our space
+
+We're located in [beautiful Potrero Hill](https://wiki.sequoiafabrica.org/wiki/Potrero_Hill_Neighborhood) at [1736 18th St](https://maps.app.goo.gl/7fiutyz9KxsT1eXc7). There are bike loops right out front. We are accessible via the 19, 22, and 55 Muni lines.
 
 ## Join our Newsletter
 
