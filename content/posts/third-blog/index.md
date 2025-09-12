@@ -9,8 +9,6 @@ featured_image: "cinder_yawn.png"
 draft: false
 ---
 
-This is a story about a cat. Her name is Cinder.
-
 Cinder is a Standard Issue Cat (SIC). There's nothing remarkable about her beyond her cat-ness.
 
 {{% figure src="cinder_stretch.jpeg" %}}

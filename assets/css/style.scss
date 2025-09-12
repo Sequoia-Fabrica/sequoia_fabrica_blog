@@ -262,7 +262,7 @@ footer {
 .main_logo {
     margin: 0 auto;
     display: inline-block;
-    max-height: 100px;
+    max-width: var(--max-content-width);
 }
 
 /*---------------------
