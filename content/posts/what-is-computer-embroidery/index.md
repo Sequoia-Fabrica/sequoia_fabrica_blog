@@ -9,7 +9,7 @@ featured_image: "final_embroidery.png"
 draft: false
 ---
 
-## Embroidery.... what's that?
+## Embroidery... what's that?
 
 Picture this: someone takes a needle, some colorful thread, and decides to stab fabric repeatedly until it looks pretty. That's embroidery! It's like drawing, but with more poking and significantly more potential for finger injuries.
 

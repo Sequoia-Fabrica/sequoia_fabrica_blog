@@ -1,7 +1,7 @@
 ---
 title: "Cinder the cat"
 date: "2025-04-28"
-summary: "A truly stunning story of transformation against all odds"
+summary: ""
 authors: ["Camille Teicheira"]
 categories: [""]
 tags: ["tag", "cats"]
@@ -11,18 +11,19 @@ draft: false
 
 This is a story about a cat. Her name is Cinder.
 
+Cinder is a Standard Issue Cat (SIC). There's nothing remarkable about her beyond her cat-ness.
+
 {{% figure src="cinder_stretch.jpeg" %}}
-Cinder is a cat
 {{% /figure %}}
+
+Sometimes... however... we sense a desire to be more.
 
 {{% figure src="cinder_yawn.jpeg" %}}
-Cinder
 {{% /figure %}}
 
-One day, she turned into a dragon.
 
 {{% figure src="cinder_dragon.jpeg" %}}
-Cinder is a cat
+Cinder the dragon
 {{% /figure %}}
 
 Fin.

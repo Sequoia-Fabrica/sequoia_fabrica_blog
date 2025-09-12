@@ -29,6 +29,8 @@ summaryLength=0
     unsafe = true
   [markup.goldmark.parser.attribute]
     block = true
+  [markup.goldmark.extensions]
+    typographer = false # turn off the typographer that turns "" into curly quotes; -- into emdash, but also does bad escaping of ...
   [markup.highlight]
     anchorLineNos = false
     codeFences = true
