@@ -22,6 +22,11 @@
             @content;
         }
     }
+    @if $breakpoint==big-mobile {
+        @media only screen and (max-width: 610px) {
+            @content;
+        }
+    }
     @if $breakpoint==mobile {
         @media only screen and (max-width: 550px) {
             @content;
@@ -32,10 +37,10 @@
 :root {
     --color-primary: rgb(84, 48, 24);
     --color-icons-lines: #f8b92b;
-    --color-sky: #f5e8d8ff;
+    --color-bg: rgb(255, 245, 216);
     --color-sub: #1e3147;
     // --color-bg: #d1ffe8;
-    --color-bg: #f8e6bf;
+    --color-bg2: #f8e6bf;
     --color-code: #fcf3e6;
     --color-links: #c1572f;
     // --color-bg: #c3f9c3;
@@ -48,18 +53,21 @@
     --pad-xlarge: 2rem;
     --pad-section: 3rem;
     --monospace: "Courier", "Courier New", monospace;
-    --font-xlarge: 2rem;
-    --font-large: 1.55rem;
-    --font-medium: 1.15rem;
-    --font-body: 1rem;
+    --font-xlarge: 1.8rem;
+    --font-large: 1.35rem;
+    --font-medium: 1.1rem;
+    --font-body: .95rem;
     --font-small: 0.75rem;
     --max-img-width: 1040px;
-    --max-content-width: 55rem;
-    --content-width: 80%;
+    --max-content-width: 60rem;
+    --content-width: 90%;
     @include media(tablet) {
-        --content-width: 90%;
+        --content-width: 70%;
     }
     @include media(mobile) {
+        --content-width: 100%;
+    }
+    @include media(big-mobile) {
         --content-width: 100%;
     }
 }
@@ -96,29 +104,35 @@ battery-svg {
     margin-left: 0.75rem;
     vertical-align: middle;
     opacity: 0.8;
-    
+
     path {
         stroke: var(--color-primary);
         stroke-width: 1.5;
         fill: none;
     }
-    
+
     // Loading state with subtle animation
     &.sparkline-loading {
         opacity: 0.5;
-        
+
         circle {
             animation: sparklinePulse 2s ease-in-out infinite;
         }
-        
-        circle:nth-child(2) { animation-delay: 0.2s; }
-        circle:nth-child(3) { animation-delay: 0.4s; }
-        circle:nth-child(4) { animation-delay: 0.6s; }
+
+        circle:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        circle:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        circle:nth-child(4) {
+            animation-delay: 0.6s;
+        }
     }
-    
+
     &.sparkline-single {
         opacity: 0.6;
-        
+
         circle {
             fill: var(--color-primary);
         }
@@ -126,8 +140,13 @@ battery-svg {
 }
 
 @keyframes sparklinePulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 0.8;
+    }
 }
 
 // Make definition lists more sparkline-friendly
@@ -240,9 +259,10 @@ footer {
     }
 }
 
-.sf_logo {
+.main_logo {
     margin: 0 auto;
     display: inline-block;
+    max-height: 100px;
 }
 
 /*---------------------
@@ -448,7 +468,7 @@ NAVIGATION & STATUS BAR
 
 .bar {
     width: 100px;
-    background: black;
+    background: var(--color-icons-lines);
     margin: 10px;
 }
 
@@ -772,6 +792,11 @@ figure,
     margin: auto;
 }
 
+.site-footer {
+    // max-width: var(--max-site-width);
+    font-size: 80%;
+}
+
 .entry-content {
     h2,
     h3,
@@ -795,7 +820,7 @@ figure,
     h2 {
         font-size: var(--font-large);
         text-indent: -0.15rem;
-        margin: var(--pad-section) auto 0;
+        margin: var(--pad-large) auto 0;
     }
     h3 {
         font-size: var(--font-medium);
@@ -864,9 +889,12 @@ FIGURES AND IMAGES
     max-width: var(--max-content-width);
     margin: auto;
 }
-img {
+img, .figure-controls {
+    max-width: var(--content-width);
     width: 100%;
     display: block;
+    margin: auto;
+
 }
 
 figure {
@@ -995,7 +1023,7 @@ iframe {
 
 hr {
     border: 0;
-    border-top: 2px solid black;
+    border-top: 2px solid var(--color-icons-lines);
 }
 
 /*------------------
@@ -1012,7 +1040,7 @@ POST FOOTER
 
 .post-footer {
     margin-top: var(--pad-xlarge);
-    border-top: 2px solid black;
+    border-top: 2px solid var(--color-icons-lines);
     padding-top: var(--pad-large);
     li {
         font-size: var(--font-medium);
@@ -1028,7 +1056,7 @@ COMMENTS & DROPDOWNS
 .comments {
     padding: var(--pad-large) 0;
     margin-top: var(--pad-large);
-    border-top: 2px solid black;
+    border-top: 2px solid var(--color-icons-lines);
     details {
         margin-top: var(--pad);
         font-family: var(--monospace);
@@ -1048,7 +1076,7 @@ COMMENTS & DROPDOWNS
     h5 {
         font-size: 0.75rem;
         font-weight: normal;
-        border-top: 1px solid black;
+        border-top: 1px solid var(--color-sub);
         padding-top: var(--pad);
         margin: var(--pad) 0;
         width: 100%;
@@ -1233,6 +1261,13 @@ footer {
     }
 }
 
+footer h3 {
+    // border-bottom: 1px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding-bottom: 2px;
+}
+
 .footer-links {
     a {
         display: block;
@@ -1340,6 +1375,7 @@ footer .weather_text {
         &::after {
             content: ":\00a0 ";
         }
+        font-style: italic;
     }
 }
 
@@ -1348,9 +1384,9 @@ footer .weather_text {
 ------------*/
 
 .columns-wrapper {
-    max-width: var(--max-content-width); // Ensure it respects the max-width
-    margin: 0 auto; // Center the columns horizontally
-    padding: 0 var(--pad); // Add some padding for spacing
+    max-width: var(--content-width); // Ensure it respects the max-width
+    margin: auto; // Center the columns horizontally
+    // padding: 0 var(--pad); // Add some padding for spacing
 }
 
 .columns {
@@ -1360,8 +1396,13 @@ footer .weather_text {
 .columns_content {
     break-inside: avoid;
     padding: 1px 0 0 0;
+    margin: auto;
 }
 
+.columns_content h2,
+p {
+    margin: auto 0 auto 0;
+}
 /*---------------
 Global Responsive Styles
 ------------*/
@@ -1469,6 +1510,12 @@ Global Responsive Styles
 }
 
 // -- calendar view --
+
+#calendar {
+    width: var(--content-width);
+    margin: auto;
+}
+
 .fc {
     .fc-toolbar-title {
         font-size: var(--font-large);
@@ -1480,7 +1527,7 @@ Global Responsive Styles
 .fc-toolbar.fc-header-toolbar {
     margin-bottom: 1.5em;
     width: 100%;
-    max-width: var(--max-content-width);
+    // max-width: var(--content-width);
     align-self: center;
 }
 
