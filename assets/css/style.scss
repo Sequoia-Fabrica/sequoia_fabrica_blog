@@ -445,7 +445,7 @@ NAVIGATION & STATUS BAR
 //     left: -5px;
 // }
 .subtitle {
-    line-height: 1.2;
+    margin-top: var(--pad);
     .icon {
         top: 3px;
     }
