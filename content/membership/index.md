@@ -18,17 +18,17 @@ As a member, you'll have 24/7 access to tools, equipment, and space to bring you
 ## Getting Started with Membership
 We've tried to make the process for membership as straightforward as possible. If you have any questions throughout the process, please [reach out to us](/contact).
 
-1. **Visit Us:** Get a feel for the space and meet our community. Potential members should visit us during one of our [events](/events).
+1. **Visit Us:** Get a feel for the space and meet our community. Potential members should visit us during one of our [events](param:events).
 
 2. **Apply:** If you decide that Sequoia Fabrica is the right fit for you, complete our [membership application form](https://forms.gle/r3AytzzxeKX7NUaM8).
 
-3. **Sign up for an Orientation:** <a href={{< param Events >}}>Member applicant orientations</a> are 1st and 3rd Tuesdays at 7PM every month. If this time will not work, [get in touch](/contact).
+3. **Sign up for an Orientation:** [Member applicant orientations](param:events) are 1st and 3rd Tuesdays at 7PM every month. If this time will not work, [get in touch](/contact).
 
 4. **Application Review** Our Board and Membership will evaluate your application. We will update you on your application status.
 
-5. **Start Paying Dues**. Membership dues are accepted through [Open Collective](https://opencollective.com/sequoia-fabrica/contribute/sponsor-68571). If this does not work for you, contact us.
+5. **Start Paying Dues**. Membership dues are accepted through [Open Collective](param:donate). If this does not work for you, contact us.
 
-6. **Become a Part of the Community:** Once you're a member, you will have access to the space to use as you please as long as it doesn't go against our community rules. Start using the space, join [a grove](/faq#what_is_a_grove), help us maintain the space.
+6. **Become a Part of the Community:** Once you're a member, you will have access to the space to use as you please as long as it doesn't go against our community rules. Start using the space, join [a grove](/faq#what-is-a-grove), help us maintain the space.
 
 ## What Membership Means
 

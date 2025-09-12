@@ -1,1 +1,23 @@
-<a href="{{ .Destination | safeURL }}"{{ with .Title}} title="{{ . }}"{{ end }}{{ if or (strings.HasPrefix .Destination "https") (strings.HasPrefix .Destination "http")}} target="_blank"{{ end }} >{{ .Text | safeHTML }}</a>
+{{- /* raw destination from Markdown */ -}}
+{{- $raw := .Destination | strings.TrimSpace -}}
+{{- $href := $raw -}}
+
+{{- /* Resolve param:KEY → site.Param "KEY" */ -}}
+{{- if strings.HasPrefix $raw "param:" -}}
+  {{- /* capture text after "param:" up to any whitespace, ?, or # */ -}}
+  {{- $key := replaceRE `^param:([^?#\s]+).*` `$1` $raw | strings.TrimSpace -}}
+  {{- $val := site.Param $key -}}
+  {{- with $val -}}
+    {{- $href = printf "%v" . -}}          {{/* force to string */}}
+  {{- else -}}
+    {{- warnf "render-link: site.Param %q not found; leaving as %q" $key $raw -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Safety + classification */ -}}
+{{- $hrefSafe := $href | safeURL -}}
+{{- $isHTTP := or (strings.HasPrefix $href "http://") (strings.HasPrefix $href "https://") -}}
+{{- $isProtoRel := strings.HasPrefix $href "//" -}}
+{{- $isExternal := and (or $isHTTP $isProtoRel) (not (strings.HasPrefix $href site.BaseURL)) -}}
+
+<a href="{{ $hrefSafe }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if $isExternal }}target="_blank"{{ end }}>{{ .Text | safeHTML }}{{ if $isExternal }}↗{{ end }}</a>

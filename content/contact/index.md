@@ -14,15 +14,15 @@ We're located in [beautiful Potrero Hill](https://wiki.sequoiafabrica.org/wiki/P
 
 ## Join our Newsletter
 
-You can follow updates on our organization through the platforms below, or if you want news delivered directly to you on a regular basis, add yourself to <a href={{< param newsletter >}}>our newsletter</a>.
+You can follow updates on our organization through the platforms below, or if you want news delivered directly to you on a regular basis, add yourself to [our newsletter](param:newsletter).
 
 
 ## Follow us on Social Media
-- <a href={{< param Instagram >}}>Instagram</a>
-- <a href={{< param Mastadon >}}>Mastodon</a>
-- <a href={{< param Events >}} >Events</a>
+- [Instagram](param:instagram)
+- [Mastodon](param:mastodon)
+- [Events](param:events)
 
 
 ## Donate
 
-- <a href={{< param Donate >}}>Open Collective</a>
+- [Open Collective](param:donate)
