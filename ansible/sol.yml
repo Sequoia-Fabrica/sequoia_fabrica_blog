@@ -1,0 +1,576 @@
+---
+- name: Configure Raspberry Pi "sol" (DietPi)
+  hosts: sol
+  become: true
+
+  vars:
+    # Non-secret config that can live in plain text
+    sol_hostname: "sol"
+
+    deploy_user: "sol"
+
+    static_site_root: "/var/www/sol"
+    static_site_server_name: "sol.local"
+    motd_path: "/etc/motd"
+
+    # Tailscale
+    tailscale_tags:
+      - "tag:home"
+      - "tag:sol"
+    tailscale_enable_ssh: true
+
+    # Backup to LOCAL DEBIAN NFS SERVER
+    backup_nfs_server: "backup-debian.local"
+    backup_nfs_export: "/srv/dietpi-backups/sol"
+    backup_mountpoint: "/mnt/dietpi-backup"
+    backup_amount: 7
+    backup_daily_hour: 3   # hour of day, 0–23
+
+    # Secrets expected from group_vars / vault:
+    #   deploy_public_key
+    #   tailscale_authkey
+    #   papertrail_host
+    #   papertrail_port
+    #   cloudflared_tunnel_token (optional)
+
+  pre_tasks:
+    - name: Ensure running on DietPi/Debian family
+      ansible.builtin.assert:
+        that:
+          - ansible_os_family == "Debian"
+        fail_msg: "This playbook expects a DietPi/Debian-like system."
+      tags: [always]
+
+    - name: Ensure this is DietPi
+      ansible.builtin.shell: 'grep -qi dietpi /etc/os-release || grep -qi dietpi /boot/dietpi/.version'
+      register: dietpi_check
+      changed_when: false
+      failed_when: dietpi_check.rc != 0
+      tags: [always]
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ sol_hostname }}"
+      tags: [base]
+
+    - name: Ensure hostname in /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^\s*127\.0\.1\.1'
+        line: "127.0.1.1   {{ sol_hostname }}"
+        create: yes
+      tags: [base]
+
+  tasks:
+    # ==================================================================
+    # Base packages / tools
+    # ==================================================================
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - rsyslog
+          - rsyslog-gnutls
+          - nginx
+          - avahi-daemon
+          - watchdog
+          - ufw
+          - unattended-upgrades
+          - apt-listchanges
+          - nfs-common
+          - prometheus-node-exporter
+        state: present
+        update_cache: yes
+      tags: [base]
+
+    # ==================================================================
+    # Deploy user + SSH hardening
+    # ==================================================================
+    - name: Create deploy user
+      ansible.builtin.user:
+        name: "{{ deploy_user }}"
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+      tags: [user, ssh]
+
+    - name: Add SSH key for deploy user
+      ansible.builtin.authorized_key:
+        user: "{{ deploy_user }}"
+        key: "{{ deploy_public_key }}"
+      tags: [user, ssh]
+
+    - name: Harden SSH config
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^#?PermitRootLogin',        line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+      notify: Restart ssh
+      tags: [ssh]
+
+    # ==================================================================
+    # NGINX static site
+    # ==================================================================
+    - name: Create static site root
+      ansible.builtin.file:
+        path: "{{ static_site_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+      tags: [nginx]
+
+    - name: Deploy default index.html
+      ansible.builtin.copy:
+        dest: "{{ static_site_root }}/index.html"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+        content: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>sol</title>
+            <style>
+              body { font-family: system-ui, sans-serif; background: #111; color: #eee; text-align: center; padding: 4rem; }
+              h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+              p { opacity: 0.7; }
+              code { background: #222; padding: 0.2rem 0.4rem; border-radius: 4px; }
+            </style>
+          </head>
+          <body>
+            <h1>sol</h1>
+            <p>Raspberry Pi · DietPi · NGINX · Tailscale · Cloudflared</p>
+            <p>Served from <code>{{ static_site_root }}</code></p>
+          </body>
+          </html>
+      tags: [nginx]
+
+    - name: Configure NGINX static site
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/sol
+        mode: "0644"
+        content: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              server_name {{ static_site_server_name }} _;
+
+              root {{ static_site_root }};
+              index index.html;
+
+              add_header X-Content-Type-Options nosniff;
+              add_header X-Frame-Options DENY;
+              add_header X-XSS-Protection "1; mode=block";
+
+              access_log /var/log/nginx/sol_access.log;
+              error_log  /var/log/nginx/sol_error.log;
+
+              location / {
+                  try_files $uri $uri/ =404;
+              }
+
+              location /health {
+                  return 200 "ok\n";
+                  add_header Content-Type text/plain;
+              }
+          }
+      tags: [nginx]
+
+    - name: Enable NGINX site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/sol
+        dest: /etc/nginx/sites-enabled/sol
+        state: link
+        force: true
+      tags: [nginx]
+
+    - name: Remove default NGINX site if present
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      tags: [nginx]
+
+    - name: Test NGINX config
+      ansible.builtin.command: nginx -t
+      register: nginx_test
+      changed_when: false
+      tags: [nginx]
+
+    - name: Restart NGINX
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+        enabled: true
+      tags: [nginx]
+
+    # ==================================================================
+    # Tailscale with tags + key (+ optional SSH)
+    # ==================================================================
+    - name: Add Tailscale APT keyring
+      ansible.builtin.get_url:
+        url: "https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg"
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        mode: "0644"
+      tags: [tailscale]
+
+    - name: Add Tailscale APT repo
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/tailscale.list
+        mode: "0644"
+        content: |
+          deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian {{ ansible_distribution_release }} main
+      tags: [tailscale]
+
+    - name: Install Tailscale
+      ansible.builtin.apt:
+        name: tailscale
+        state: present
+        update_cache: yes
+      tags: [tailscale]
+
+    - name: Enable and start tailscaled
+      ansible.builtin.service:
+        name: tailscaled
+        state: started
+        enabled: true
+      tags: [tailscale]
+
+    - name: Bring Tailscale up with auth key and tags
+      ansible.builtin.command: >
+        tailscale up
+        --authkey={{ tailscale_authkey }}
+        --hostname={{ sol_hostname }}
+        --accept-routes=true
+        {% if tailscale_enable_ssh %}--ssh=true{% endif %}
+        --advertise-tags={{ tailscale_tags | join(",") }}
+      args:
+        creates: /var/lib/tailscale/tailscaled.state
+      tags: [tailscale]
+
+    # ==================================================================
+    # Syslog forwarding to Papertrail (rsyslog + TLS)
+    # ==================================================================
+    - name: Configure rsyslog to use TLS CA
+      ansible.builtin.lineinfile:
+        path: /etc/rsyslog.conf
+        regexp: '^\$DefaultNetstreamDriverCAFile'
+        line: '$DefaultNetstreamDriverCAFile /etc/ssl/certs/ca-certificates.crt'
+        insertafter: EOF
+      tags: [logging]
+
+    - name: Configure rsyslog to send to Papertrail
+      ansible.builtin.copy:
+        dest: /etc/rsyslog.d/90-papertrail.conf
+        mode: "0644"
+        content: |
+          # Send all logs to Papertrail
+          $DefaultNetstreamDriverCAFile /etc/ssl/certs/ca-certificates.crt
+          $ActionSendStreamDriver gtls
+          $ActionSendStreamDriverMode 1
+          $ActionSendStreamDriverAuthMode x509/name
+          $ActionSendStreamDriverPermittedPeer *
+
+          *.* @@{{ papertrail_host }}:{{ papertrail_port }}
+      tags: [logging]
+
+    - name: Restart rsyslog
+      ansible.builtin.service:
+        name: rsyslog
+        state: restarted
+        enabled: true
+      tags: [logging]
+
+    # ==================================================================
+    # SD card wear minimisation
+    # ==================================================================
+    - name: Reduce vm.swappiness
+      ansible.builtin.sysctl:
+        name: vm.swappiness
+        value: "10"
+        state: present
+        sysctl_set: true
+        reload: true
+      tags: [sd_wear]
+
+    - name: Put /var/log in tmpfs via fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^\s*tmpfs\s+/var/log'
+        line: 'tmpfs   /var/log    tmpfs   defaults,noatime,nosuid,nodev,mode=0755,size=50m   0   0'
+        state: present
+      tags: [sd_wear]
+
+    - name: Put /tmp in tmpfs via fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^\s*tmpfs\s+/tmp'
+        line: 'tmpfs   /tmp    tmpfs   defaults,noatime,nosuid,nodev,mode=1777,size=100m   0   0'
+        state: present
+      tags: [sd_wear]
+
+    - name: Set journald to volatile storage
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^Storage='
+        line: 'Storage=volatile'
+        create: yes
+      tags: [sd_wear]
+
+    - name: Journald tuning block
+      ansible.builtin.blockinfile:
+        path: /etc/systemd/journald.conf
+        marker: "# {mark} ANSIBLE-JOURNALD-TUNING"
+        block: |
+          SystemMaxUse=50M
+          SystemMaxFileSize=10M
+          RateLimitIntervalSec=30s
+          RateLimitBurst=1000
+      tags: [sd_wear]
+
+    - name: Restart systemd-journald
+      ansible.builtin.service:
+        name: systemd-journald
+        state: restarted
+      tags: [sd_wear]
+
+    # ==================================================================
+    # Custom MOTD / login message
+    # ==================================================================
+    - name: Set custom MOTD with ASCII art
+      ansible.builtin.copy:
+        dest: "{{ motd_path }}"
+        mode: "0644"
+        content: |
+          ____        _
+         / ___|  ___ | | ___   _
+         \___ \ / _ \| |/ / | | |
+          ___) | (_) |   <| |_| |
+         |____/ \___/|_|\_\\__, |
+                           |___/
+              Raspberry Pi · {{ sol_hostname }}
+
+          NGINX static site: http://{{ static_site_server_name }} or http://{{ sol_hostname }}
+          Tailscale tags: {{ tailscale_tags | join(", ") }}
+          Logs: forwarded to Papertrail ({{ papertrail_host }}:{{ papertrail_port }})
+
+          Have fun. Don’t wear out the SD card. 🧪
+      tags: [motd]
+
+    # ==================================================================
+    # Avahi (mDNS)
+    # ==================================================================
+    - name: Ensure avahi-daemon is enabled
+      ansible.builtin.service:
+        name: avahi-daemon
+        state: started
+        enabled: true
+      tags: [avahi]
+
+    # ==================================================================
+    # Watchdog
+    # ==================================================================
+    - name: Enable hardware watchdog in /etc/default/watchdog
+      ansible.builtin.lineinfile:
+        path: /etc/default/watchdog
+        regexp: '^#?watchdog_device='
+        line: 'watchdog_device=/dev/watchdog'
+        create: yes
+      tags: [watchdog]
+
+    - name: Basic watchdog config
+      ansible.builtin.blockinfile:
+        path: /etc/watchdog.conf
+        marker: "# {mark} ANSIBLE-WATCHDOG"
+        block: |
+          watchdog-device = /dev/watchdog
+          max-load-1      = 24
+          watchdog-timeout = 15
+      tags: [watchdog]
+
+    - name: Enable and start watchdog service
+      ansible.builtin.service:
+        name: watchdog
+        state: started
+        enabled: true
+      tags: [watchdog]
+
+    # ==================================================================
+    # Cloudflared (optional)
+    # ==================================================================
+    - name: Add Cloudflare APT keyring
+      ansible.builtin.get_url:
+        url: https://pkg.cloudflare.com/cloudflare-main.gpg
+        dest: /usr/share/keyrings/cloudflare-main.gpg
+        mode: "0644"
+      when: cloudflared_tunnel_token | length > 0
+      tags: [cloudflared]
+
+    - name: Add Cloudflare APT repo
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/cloudflared.list
+        mode: "0644"
+        content: |
+          deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/ {{ ansible_distribution_release }} main
+      when: cloudflared_tunnel_token | length > 0
+      tags: [cloudflared]
+
+    - name: Install cloudflared
+      ansible.builtin.apt:
+        name: cloudflared
+        state: present
+        update_cache: yes
+      when: cloudflared_tunnel_token | length > 0
+      tags: [cloudflared]
+
+    - name: Install cloudflared tunnel as a service
+      ansible.builtin.command: >
+        cloudflared service install {{ cloudflared_tunnel_token }}
+      args:
+        creates: /etc/systemd/system/cloudflared.service
+      when: cloudflared_tunnel_token | length > 0
+      tags: [cloudflared]
+
+    - name: Ensure cloudflared service is running
+      ansible.builtin.service:
+        name: cloudflared
+        state: started
+        enabled: true
+      when: cloudflared_tunnel_token | length > 0
+      tags: [cloudflared]
+
+    # ==================================================================
+    # Unattended upgrades
+    # ==================================================================
+    - name: Enable unattended-upgrades
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: "0644"
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+      tags: [unattended]
+
+    # ==================================================================
+    # Firewall (ufw)
+    # ==================================================================
+    - name: Allow SSH
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+      tags: [firewall]
+
+    - name: Allow HTTP
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+      tags: [firewall]
+
+    - name: Enable ufw with deny-by-default
+      community.general.ufw:
+        state: enabled
+        policy: deny
+      tags: [firewall]
+
+    # ==================================================================
+    # Time sync & metrics
+    # ==================================================================
+    - name: Ensure systemd-timesyncd is enabled
+      ansible.builtin.service:
+        name: systemd-timesyncd
+        state: started
+        enabled: true
+      tags: [time]
+
+    - name: Enable node_exporter
+      ansible.builtin.service:
+        name: prometheus-node-exporter
+        state: started
+        enabled: true
+      tags: [metrics]
+
+    # ==================================================================
+    # DietPi-Backup → local Debian NFS server
+    # ==================================================================
+    - name: Create backup mountpoint
+      ansible.builtin.file:
+        path: "{{ backup_mountpoint }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      tags: [backup]
+
+    - name: Add NFS mount for DietPi-Backup target
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: "^{{ backup_nfs_server | regex_escape() }}:{{ backup_nfs_export | regex_escape() }}\\s+{{ backup_mountpoint | regex_escape() }}\\s+nfs"
+        line: "{{ backup_nfs_server }}:{{ backup_nfs_export }} {{ backup_mountpoint }} nfs defaults,_netdev 0 0"
+        state: present
+      tags: [backup]
+
+    - name: Mount NFS backup target
+      ansible.builtin.command: mount -a
+      changed_when: false
+      tags: [backup]
+
+    - name: Ensure NFS backup target is mounted
+      ansible.builtin.command: mountpoint -q {{ backup_mountpoint }}
+      register: backup_mount_check
+      changed_when: false
+      tags: [backup]
+
+    - name: Fail if backup mount is not available
+      ansible.builtin.fail:
+        msg: "Backup mount {{ backup_mountpoint }} is not available. Check NFS server/export."
+      when: backup_mount_check.rc != 0
+      tags: [backup]
+
+    - name: Configure DietPi-Backup settings file
+      ansible.builtin.copy:
+        dest: /boot/dietpi/.dietpi-backup_settings
+        mode: "0644"
+        content: |
+          FP_TARGET={{ backup_mountpoint }}
+          DAILY_BACKUP=0
+          AMOUNT={{ backup_amount }}
+      tags: [backup]
+
+    - name: Install DietPi-Backup daily cron (to NFS target)
+      ansible.builtin.copy:
+        dest: /etc/cron.d/dietpi_backups
+        mode: "0644"
+        content: |
+          # Daily DietPi-Backup to NFS target
+          # Uses DietPi's rsync-based backup system; FP_TARGET set in /boot/dietpi/.dietpi-backup_settings
+          {{ backup_daily_hour }} 3 * * * root export G_INTERACTIVE=0; /boot/dietpi/dietpi-backup 1 {{ backup_mountpoint }} >/dev/null 2>&1
+      tags: [backup]
+
+    # ==================================================================
+    # SD-wear housekeeping (apt cache)
+    # ==================================================================
+    - name: Weekly apt cache cleanup
+      ansible.builtin.copy:
+        dest: /etc/cron.weekly/apt-cache-clean
+        mode: "0755"
+        content: |
+          #!/bin/sh
+          apt-get clean
+      tags: [sd_wear, housekeeping]
+
+  handlers:
+    - name: Restart ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

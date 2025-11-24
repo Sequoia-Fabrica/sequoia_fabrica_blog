@@ -1,0 +1,15 @@
+---
+
+# This is an example template for vault.yml
+# Copy this to vault.yml, fill in your secrets, then encrypt:
+#   ansible-vault encrypt group_vars/sol/vault.yml
+
+deploy_public_key: "ssh-ed25519 AAAA... ryan@laptop"
+
+tailscale_authkey: "tskey-XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+papertrail_host: "logsN.papertrailapp.com"
+papertrail_port: 12345
+
+cloudflared_tunnel_token: ""   # or the real token if you use a tunnel
+

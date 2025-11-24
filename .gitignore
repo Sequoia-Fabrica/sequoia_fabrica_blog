@@ -24,3 +24,7 @@ __pycache__/
 # vscode
 .vscode/
 settings.json
+
+# Ansible vault files
+**/vault.yml
+**/*_vault.yml

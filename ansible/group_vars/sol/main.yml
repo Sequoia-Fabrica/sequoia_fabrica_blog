@@ -1,0 +1,6 @@
+---
+tailscale_tags:
+  - "tag:home"
+  - "tag:sol"
+
+tailscale_enable_ssh: true
