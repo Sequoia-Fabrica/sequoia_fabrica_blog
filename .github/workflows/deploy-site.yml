@@ -55,7 +55,7 @@ jobs:
           path: built-site/
           remote_path: /var/www/html/
           remote_host: sol.cloudforest-perch.ts.net
-          remote_user: olimex
+          remote_user: sol
           remote_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
 
       
