@@ -28,3 +28,4 @@ settings.json
 # Ansible vault files
 **/vault.yml
 **/*_vault.yml
+ansible/patch_dietpi.sh

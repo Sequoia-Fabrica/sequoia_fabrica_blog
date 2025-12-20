@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage: ./patch_dietpi_sol.sh /path/to/dietpi.txt
+DIETPI_TXT="${1:-dietpi.txt}"
+
+if [ ! -f "$DIETPI_TXT" ]; then
+  echo "dietpi.txt not found at: $DIETPI_TXT" >&2
+  exit 1
+fi
+
+###############################################################################
+# EDIT THESE VALUES
+###############################################################################
+
+GLOBAL_PASSWORD="REPLACE_WITH_STRONG_PASSWORD"
+
+HOSTNAME="sol"
+LOCALE="en_US.UTF-8"
+KEYBOARD_LAYOUT="us"
+TIMEZONE="America/Los_Angeles"
+
+WIFI_COUNTRY="US"
+
+# APT packages to pre-install so Ansible works out of the box
+APT_INSTALLS="python3 python3-apt git curl"
+
+# Your SSH public key (for root + dietpi)
+SSH_PUBKEY='ssh-ed25519 AAAA...YOUR_REAL_KEY... ryan@laptop'
+
+###############################################################################
+# Helpers
+###############################################################################
+
+# sed wrapper that works with GNU/BSD sed
+sedi() {
+  # $1 = pattern, $2 = replacement, $3 = file
+  local pattern="$1"
+  local replace="$2"
+  local file="$3"
+  if sed --version >/dev/null 2>&1; then
+    sed -i "s|$pattern|$replace|" "$file"
+  else
+    sed -i '' "s|$pattern|$replace|" "$file"
+  fi
+}
+
+ensure_line_present() {
+  local key="$1"
+  local value="$2"
+  local file="$3"
+  if ! grep -q "^${key}=" "$file"; then
+    printf '%s=%s\n' "$key" "$value" >> "$file"
+  else
+    sedi "^${key}=.*" "${key}=${value}" "$file"
+  fi
+}
+
+###############################################################################
+# Apply substitutions
+###############################################################################
+
+echo "Patching $DIETPI_TXT for host '$HOSTNAME'..."
+
+# Global password
+sedi '^AUTO_SETUP_GLOBAL_PASSWORD=.*' "AUTO_SETUP_GLOBAL_PASSWORD=${GLOBAL_PASSWORD}" "$DIETPI_TXT"
+
+# Locale / keyboard / timezone
+sedi '^AUTO_SETUP_LOCALE=.*'           "AUTO_SETUP_LOCALE=${LOCALE}"           "$DIETPI_TXT"
+sedi '^AUTO_SETUP_KEYBOARD_LAYOUT=.*'  "AUTO_SETUP_KEYBOARD_LAYOUT=${KEYBOARD_LAYOUT}" "$DIETPI_TXT"
+sedi '^AUTO_SETUP_TIMEZONE=.*'         "AUTO_SETUP_TIMEZONE=${TIMEZONE}"       "$DIETPI_TXT"
+
+# Network: WiFi on, Ethernet off, hostname, WiFi country
+sedi '^AUTO_SETUP_NET_ETHERNET_ENABLED=.*' "AUTO_SETUP_NET_ETHERNET_ENABLED=0" "$DIETPI_TXT"
+sedi '^AUTO_SETUP_NET_WIFI_ENABLED=.*'     "AUTO_SETUP_NET_WIFI_ENABLED=1"     "$DIETPI_TXT"
+sedi '^AUTO_SETUP_NET_WIFI_COUNTRY_CODE=.*' "AUTO_SETUP_NET_WIFI_COUNTRY_CODE=${WIFI_COUNTRY}" "$DIETPI_TXT"
+sedi '^AUTO_SETUP_NET_HOSTNAME=.*'         "AUTO_SETUP_NET_HOSTNAME=${HOSTNAME}" "$DIETPI_TXT"
+
+# Keep DHCP (no static) – only if keys exist
+sedi '^AUTO_SETUP_NET_USESTATIC=.*'   "AUTO_SETUP_NET_USESTATIC=0"   "$DIETPI_TXT"
+sedi '^AUTO_SETUP_DHCP_TO_STATIC=.*'  "AUTO_SETUP_DHCP_TO_STATIC=0"  "$DIETPI_TXT"
+
+# Wait for network at boot
+sedi '^AUTO_SETUP_BOOT_WAIT_FOR_NETWORK=.*' "AUTO_SETUP_BOOT_WAIT_FOR_NETWORK=1" "$DIETPI_TXT"
+
+# Headless mode
+sedi '^AUTO_SETUP_HEADLESS=.*' "AUTO_SETUP_HEADLESS=1" "$DIETPI_TXT"
+
+# Logging: RAM log, 50 MiB
+sedi '^AUTO_SETUP_LOGGING_INDEX=.*'  "AUTO_SETUP_LOGGING_INDEX=-1" "$DIETPI_TXT"
+sedi '^AUTO_SETUP_RAMLOG_MAXSIZE=.*' "AUTO_SETUP_RAMLOG_MAXSIZE=50" "$DIETPI_TXT"
+
+# APT installs (note original line is commented in the template)
+if grep -q '^#AUTO_SETUP_APT_INSTALLS=' "$DIETPI_TXT"; then
+  sedi '^#AUTO_SETUP_APT_INSTALLS=.*' "AUTO_SETUP_APT_INSTALLS=${APT_INSTALLS}" "$DIETPI_TXT"
+else
+  ensure_line_present "AUTO_SETUP_APT_INSTALLS" "${APT_INSTALLS}" "$DIETPI_TXT"
+fi
+
+# SSH server: OpenSSH
+sedi '^AUTO_SETUP_SSH_SERVER_INDEX=.*' "AUTO_SETUP_SSH_SERVER_INDEX=-2" "$DIETPI_TXT"
+
+# SSH pubkey: uncomment/replace or append if missing
+if grep -q '^#AUTO_SETUP_SSH_PUBKEY=' "$DIETPI_TXT"; then
+  sedi '^#AUTO_SETUP_SSH_PUBKEY=.*' "AUTO_SETUP_SSH_PUBKEY=${SSH_PUBKEY}" "$DIETPI_TXT"
+elif grep -q '^AUTO_SETUP_SSH_PUBKEY=' "$DIETPI_TXT"; then
+  sedi '^AUTO_SETUP_SSH_PUBKEY=.*' "AUTO_SETUP_SSH_PUBKEY=${SSH_PUBKEY}" "$DIETPI_TXT"
+else
+  echo "AUTO_SETUP_SSH_PUBKEY=${SSH_PUBKEY}" >> "$DIETPI_TXT"
+fi
+
+# Disable SSH password logins
+sedi '^SOFTWARE_DISABLE_SSH_PASSWORD_LOGINS=.*' "SOFTWARE_DISABLE_SSH_PASSWORD_LOGINS=1" "$DIETPI_TXT"
+
+# Non-interactive / automated + accept license
+if grep -q '^AUTO_SETUP_AUTOMATED=' "$DIETPI_TXT"; then
+  sedi '^AUTO_SETUP_AUTOMATED=.*' "AUTO_SETUP_AUTOMATED=1" "$DIETPI_TXT"
+else
+  echo "AUTO_SETUP_AUTOMATED=1" >> "$DIETPI_TXT"
+fi
+
+if grep -q '^AUTO_SETUP_ACCEPT_LICENSE=' "$DIETPI_TXT"; then
+  sedi '^AUTO_SETUP_ACCEPT_LICENSE=.*' "AUTO_SETUP_ACCEPT_LICENSE=1" "$DIETPI_TXT"
+else
+  echo "AUTO_SETUP_ACCEPT_LICENSE=1" >> "$DIETPI_TXT"
+fi
+
+echo "Done. Review $DIETPI_TXT and your dietpi-wifi.txt, then eject the card and boot the Pi."
