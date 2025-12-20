@@ -8,8 +8,9 @@ deploy_public_key: "ssh-ed25519 AAAA... ryan@laptop"
 
 tailscale_authkey: "tskey-XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
-papertrail_host: "logsN.papertrailapp.com"
-papertrail_port: 12345
+loggly_account: "symbiosisla"
+loggly_token: "573180af-dc4b-45bc-9800-64a604f5355f"
+loggly_username: "ryan"
 
 cloudflared_tunnel_token: ""   # or the real token if you use a tunnel
 

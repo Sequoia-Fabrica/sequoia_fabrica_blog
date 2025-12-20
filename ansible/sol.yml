@@ -9,48 +9,66 @@
 
     deploy_user: "sol"
 
-    static_site_root: "/var/www/sol"
+    static_site_root: "/var/www/html"
     static_site_server_name: "sol.local"
     motd_path: "/etc/motd"
 
+    # Monitoring collectors
+    collectors_app_dir: "/opt/sequoia_fabrica_blog"
+    collectors_log_dir: "/var/log/monitoring"
+    collectors_api_dir: "/var/www/html/api"
+
     # Tailscale
+    # Note: Tags must be configured in Tailscale admin console ACL policy before use
+    # If tags are not configured, set tailscale_tags to an empty list: []
     tailscale_tags:
-      - "tag:home"
-      - "tag:sol"
+      - "tag:eukaryotes"
+    # tailscale_tags: []  # Uncomment this and comment above if tags are not configured
     tailscale_enable_ssh: true
 
     # Backup to LOCAL DEBIAN NFS SERVER
-    backup_nfs_server: "backup-debian.local"
-    backup_nfs_export: "/srv/dietpi-backups/sol"
-    backup_mountpoint: "/mnt/dietpi-backup"
-    backup_amount: 7
-    backup_daily_hour: 3   # hour of day, 0–23
-
+    # backup_nfs_server: "backup-debian.local"
+    # backup_nfs_export: "/srv/dietpi-backups/sol"
+    # backup_mountpoint: "/mnt/dietpi-backup"
+    # backup_amount: 7
+    # backup_daily_hour: 3   # hour of day, 0–23
+    #
     # Secrets expected from group_vars / vault:
-    #   deploy_public_key
+    #   deploy_public_key (SSH key for deployment user, used by GitHub Actions)
     #   tailscale_authkey
-    #   papertrail_host
-    #   papertrail_port
+    #   loggly_account
+    #   loggly_token
+    #   loggly_username
     #   cloudflared_tunnel_token (optional)
 
   pre_tasks:
     - name: Ensure running on DietPi/Debian family
       ansible.builtin.assert:
         that:
-          - ansible_os_family == "Debian"
+          - ansible_facts['os_family'] == "Debian"
         fail_msg: "This playbook expects a DietPi/Debian-like system."
       tags: [always]
 
     - name: Ensure this is DietPi
-      ansible.builtin.shell: 'grep -qi dietpi /etc/os-release || grep -qi dietpi /boot/dietpi/.version'
+      ansible.builtin.shell: "grep -qi dietpi /etc/os-release || grep -qi dietpi /boot/dietpi/.version"
       register: dietpi_check
       changed_when: false
       failed_when: dietpi_check.rc != 0
       tags: [always]
 
-    - name: Set hostname
-      ansible.builtin.hostname:
-        name: "{{ sol_hostname }}"
+    - name: Set hostname persistently
+      block:
+        - name: Set hostname
+          ansible.builtin.hostname:
+            name: "{{ sol_hostname }}"
+            use: systemd
+
+        - name: Verify hostname was set
+          ansible.builtin.command: hostnamectl status
+          register: hostname_check
+          changed_when: false
+          failed_when: sol_hostname not in hostname_check.stdout
+      when: not ansible_check_mode
       tags: [base]
 
     - name: Ensure hostname in /etc/hosts
@@ -72,7 +90,6 @@
           - curl
           - gnupg
           - rsyslog
-          - rsyslog-gnutls
           - nginx
           - avahi-daemon
           - watchdog
@@ -91,7 +108,7 @@
     - name: Create deploy user
       ansible.builtin.user:
         name: "{{ deploy_user }}"
-        groups: sudo
+        groups: sudo,www-data
         append: yes
         shell: /bin/bash
         create_home: yes
@@ -101,6 +118,7 @@
       ansible.builtin.authorized_key:
         user: "{{ deploy_user }}"
         key: "{{ deploy_public_key }}"
+      when: deploy_public_key is defined
       tags: [user, ssh]
 
     - name: Harden SSH config
@@ -110,8 +128,11 @@
         line: "{{ item.line }}"
         state: present
       loop:
-        - { regexp: '^#?PermitRootLogin',        line: 'PermitRootLogin no' }
-        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
+        - {
+            regexp: "^#?PasswordAuthentication",
+            line: "PasswordAuthentication no",
+          }
       notify: Restart ssh
       tags: [ssh]
 
@@ -124,7 +145,7 @@
         state: directory
         owner: www-data
         group: www-data
-        mode: "0755"
+        mode: "2775"
       tags: [nginx]
 
     - name: Deploy default index.html
@@ -183,6 +204,12 @@
                   return 200 "ok\n";
                   add_header Content-Type text/plain;
               }
+
+              location /api/ {
+                alias {{ collectors_api_dir }}/;
+                add_header Cache-Control "no-cache, must-revalidate";
+                types { application/json json; }
+              }
           }
       tags: [nginx]
 
@@ -204,6 +231,7 @@
       ansible.builtin.command: nginx -t
       register: nginx_test
       changed_when: false
+      failed_when: nginx_test.rc != 0
       tags: [nginx]
 
     - name: Restart NGINX
@@ -211,31 +239,24 @@
         name: nginx
         state: restarted
         enabled: true
+      when: not ansible_check_mode
       tags: [nginx]
 
     # ==================================================================
     # Tailscale with tags + key (+ optional SSH)
     # ==================================================================
-    - name: Add Tailscale APT keyring
-      ansible.builtin.get_url:
-        url: "https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg"
-        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
-        mode: "0644"
+    - name: Check if Tailscale is already installed
+      ansible.builtin.stat:
+        path: /usr/bin/tailscale
+      register: tailscale_binary
       tags: [tailscale]
 
-    - name: Add Tailscale APT repo
-      ansible.builtin.copy:
-        dest: /etc/apt/sources.list.d/tailscale.list
-        mode: "0644"
-        content: |
-          deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian {{ ansible_distribution_release }} main
-      tags: [tailscale]
-
-    - name: Install Tailscale
-      ansible.builtin.apt:
-        name: tailscale
-        state: present
-        update_cache: yes
+    - name: Install Tailscale using standalone installer
+      ansible.builtin.shell: |
+        curl -fsSL https://tailscale.com/install.sh | sh
+      when:
+        - not tailscale_binary.stat.exists
+        - not ansible_check_mode
       tags: [tailscale]
 
     - name: Enable and start tailscaled
@@ -243,6 +264,38 @@
         name: tailscaled
         state: started
         enabled: true
+      when: not ansible_check_mode
+      tags: [tailscale]
+
+    - name: Check Tailscale status
+      ansible.builtin.command: tailscale status
+      register: tailscale_status
+      changed_when: false
+      failed_when: false
+      tags: [tailscale]
+
+    - name: Debug Tailscale status
+      ansible.builtin.debug:
+        msg: "Tailscale status: rc={{ tailscale_status.rc }}, stdout={{ tailscale_status.stdout[:100] if tailscale_status.stdout else 'empty' }}"
+      tags: [tailscale, debug]
+
+    - name: Check if Tailscale is logged in
+      ansible.builtin.set_fact:
+        tailscale_logged_in: "{{ tailscale_status.rc == 0 and 'logged out' not in (tailscale_status.stdout | default('') | lower) }}"
+      tags: [tailscale]
+
+    - name: Bring Tailscale up with auth key (without tags)
+      ansible.builtin.command: >
+        tailscale up
+        --authkey={{ tailscale_authkey }}
+        --hostname={{ sol_hostname }}
+        --accept-routes=true
+        {% if tailscale_enable_ssh %}--ssh=true{% endif %}
+      when:
+        - tailscale_authkey is defined
+        - not tailscale_logged_in
+        - not ansible_check_mode
+        - tailscale_tags is not defined or tailscale_tags | length == 0
       tags: [tailscale]
 
     - name: Bring Tailscale up with auth key and tags
@@ -253,41 +306,52 @@
         --accept-routes=true
         {% if tailscale_enable_ssh %}--ssh=true{% endif %}
         --advertise-tags={{ tailscale_tags | join(",") }}
-      args:
-        creates: /var/lib/tailscale/tailscaled.state
+      when:
+        - tailscale_authkey is defined
+        - not tailscale_logged_in
+        - not ansible_check_mode
+        - tailscale_tags is defined
+        - tailscale_tags | length > 0
       tags: [tailscale]
 
     # ==================================================================
-    # Syslog forwarding to Papertrail (rsyslog + TLS)
+    # Loggly log forwarding (using official installation script)
     # ==================================================================
-    - name: Configure rsyslog to use TLS CA
-      ansible.builtin.lineinfile:
-        path: /etc/rsyslog.conf
-        regexp: '^\$DefaultNetstreamDriverCAFile'
-        line: '$DefaultNetstreamDriverCAFile /etc/ssl/certs/ca-certificates.crt'
-        insertafter: EOF
+    - name: Download Loggly configure script
+      ansible.builtin.shell: |
+        cd /tmp
+        curl -O https://www.loggly.com/install/configure-linux.sh
+        chmod 755 /tmp/configure-linux.sh
+      args:
+        creates: /tmp/configure-linux.sh
+      when: not ansible_check_mode
       tags: [logging]
 
-    - name: Configure rsyslog to send to Papertrail
-      ansible.builtin.copy:
-        dest: /etc/rsyslog.d/90-papertrail.conf
-        mode: "0644"
-        content: |
-          # Send all logs to Papertrail
-          $DefaultNetstreamDriverCAFile /etc/ssl/certs/ca-certificates.crt
-          $ActionSendStreamDriver gtls
-          $ActionSendStreamDriverMode 1
-          $ActionSendStreamDriverAuthMode x509/name
-          $ActionSendStreamDriverPermittedPeer *
-
-          *.* @@{{ papertrail_host }}:{{ papertrail_port }}
+    - name: Run Loggly configuration script
+      ansible.builtin.command: >
+        bash /tmp/configure-linux.sh
+        -a {{ loggly_account }}
+        -t {{ loggly_token }}
+        -u {{ loggly_username }}
+      args:
+        creates: /etc/rsyslog.d/22-loggly.conf
+      when:
+        - loggly_account is defined
+        - loggly_token is defined
+        - loggly_username is defined
+        - not ansible_check_mode
       tags: [logging]
 
-    - name: Restart rsyslog
+    - name: Ensure rsyslog is restarted after Loggly configuration
       ansible.builtin.service:
         name: rsyslog
         state: restarted
         enabled: true
+      when:
+        - loggly_account is defined
+        - loggly_token is defined
+        - loggly_username is defined
+        - not ansible_check_mode
       tags: [logging]
 
     # ==================================================================
@@ -302,27 +366,29 @@
         reload: true
       tags: [sd_wear]
 
-    - name: Put /var/log in tmpfs via fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        regexp: '^\s*tmpfs\s+/var/log'
-        line: 'tmpfs   /var/log    tmpfs   defaults,noatime,nosuid,nodev,mode=0755,size=50m   0   0'
-        state: present
+    - name: Ensure /var/log tmpfs is mounted
+      ansible.posix.mount:
+        path: /var/log
+        src: tmpfs
+        fstype: tmpfs
+        opts: defaults,noatime,nosuid,nodev,mode=0755,size=50m
+        state: mounted
       tags: [sd_wear]
 
-    - name: Put /tmp in tmpfs via fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        regexp: '^\s*tmpfs\s+/tmp'
-        line: 'tmpfs   /tmp    tmpfs   defaults,noatime,nosuid,nodev,mode=1777,size=100m   0   0'
-        state: present
+    - name: Ensure /tmp tmpfs is mounted
+      ansible.posix.mount:
+        path: /tmp
+        src: tmpfs
+        fstype: tmpfs
+        opts: defaults,noatime,nosuid,nodev,mode=1777,size=100m
+        state: mounted
       tags: [sd_wear]
 
     - name: Set journald to volatile storage
       ansible.builtin.lineinfile:
         path: /etc/systemd/journald.conf
-        regexp: '^Storage='
-        line: 'Storage=volatile'
+        regexp: "^Storage="
+        line: "Storage=volatile"
         create: yes
       tags: [sd_wear]
 
@@ -341,6 +407,7 @@
       ansible.builtin.service:
         name: systemd-journald
         state: restarted
+      when: not ansible_check_mode
       tags: [sd_wear]
 
     # ==================================================================
@@ -351,19 +418,18 @@
         dest: "{{ motd_path }}"
         mode: "0644"
         content: |
-          ____        _
-         / ___|  ___ | | ___   _
-         \___ \ / _ \| |/ / | | |
-          ___) | (_) |   <| |_| |
-         |____/ \___/|_|\_\\__, |
-                           |___/
-              Raspberry Pi · {{ sol_hostname }}
+          _____         _
+          / ___|  ___  |_|
+          \___ \ / _ \ | |
+            ___) |(_)| |_|
+          |____/ \___/ |_|
 
-          NGINX static site: http://{{ static_site_server_name }} or http://{{ sol_hostname }}
-          Tailscale tags: {{ tailscale_tags | join(", ") }}
-          Logs: forwarded to Papertrail ({{ papertrail_host }}:{{ papertrail_port }})
-
-          Have fun. Don’t wear out the SD card. 🧪
+            Raspberry Pi · {{ sol_hostname }}
+            IP address: {{ ansible_facts['default_ipv4']['address'] | default('N/A') }}
+            NGINX static site: http://{{ static_site_server_name }}
+            Tailscale tags: {{ tailscale_tags | join(", ") }}
+            {% if loggly_account is defined %}Logs: forwarded to Loggly ({{ loggly_account }}){% else %}Logs: local only{% endif %}
+            Have fun. Don't wear out the SD card. 🧪
       tags: [motd]
 
     # ==================================================================
@@ -374,6 +440,7 @@
         name: avahi-daemon
         state: started
         enabled: true
+      when: not ansible_check_mode
       tags: [avahi]
 
     # ==================================================================
@@ -382,8 +449,8 @@
     - name: Enable hardware watchdog in /etc/default/watchdog
       ansible.builtin.lineinfile:
         path: /etc/default/watchdog
-        regexp: '^#?watchdog_device='
-        line: 'watchdog_device=/dev/watchdog'
+        regexp: "^#?watchdog_device="
+        line: "watchdog_device=/dev/watchdog"
         create: yes
       tags: [watchdog]
 
@@ -391,6 +458,7 @@
       ansible.builtin.blockinfile:
         path: /etc/watchdog.conf
         marker: "# {mark} ANSIBLE-WATCHDOG"
+        create: yes
         block: |
           watchdog-device = /dev/watchdog
           max-load-1      = 24
@@ -402,42 +470,53 @@
         name: watchdog
         state: started
         enabled: true
+      when: not ansible_check_mode
       tags: [watchdog]
 
     # ==================================================================
     # Cloudflared (optional)
     # ==================================================================
-    - name: Add Cloudflare APT keyring
+    - name: Debug cloudflared_tunnel_token variable
+      ansible.builtin.debug:
+        msg: "cloudflared_tunnel_token is {{ 'defined' if cloudflared_tunnel_token is defined else 'NOT defined' }}"
+      tags: [cloudflared, debug]
+
+    - name: Determine cloudflared architecture
+      ansible.builtin.set_fact:
+        cloudflared_arch: >-
+          {%- if ansible_architecture == 'x86_64' -%}
+            amd64
+          {%- elif ansible_architecture == 'aarch64' or ansible_architecture == 'arm64' -%}
+            arm64
+          {%- elif ansible_architecture in ['armv7l', 'armv6l', 'armhf'] -%}
+            arm
+          {%- else -%}
+            amd64
+          {%- endif -%}
+      when: cloudflared_tunnel_token is defined
+      tags: [cloudflared]
+
+    - name: Download cloudflared binary
       ansible.builtin.get_url:
-        url: https://pkg.cloudflare.com/cloudflare-main.gpg
-        dest: /usr/share/keyrings/cloudflare-main.gpg
-        mode: "0644"
-      when: cloudflared_tunnel_token | length > 0
+        url: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{{ cloudflared_arch }}"
+        dest: /usr/local/bin/cloudflared
+        mode: "0755"
+      when: cloudflared_tunnel_token is defined
       tags: [cloudflared]
 
-    - name: Add Cloudflare APT repo
-      ansible.builtin.copy:
-        dest: /etc/apt/sources.list.d/cloudflared.list
-        mode: "0644"
-        content: |
-          deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/ {{ ansible_distribution_release }} main
-      when: cloudflared_tunnel_token | length > 0
-      tags: [cloudflared]
-
-    - name: Install cloudflared
-      ansible.builtin.apt:
-        name: cloudflared
-        state: present
-        update_cache: yes
-      when: cloudflared_tunnel_token | length > 0
+    - name: Check if cloudflared service exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/cloudflared.service
+      register: cloudflared_service
       tags: [cloudflared]
 
     - name: Install cloudflared tunnel as a service
       ansible.builtin.command: >
         cloudflared service install {{ cloudflared_tunnel_token }}
-      args:
-        creates: /etc/systemd/system/cloudflared.service
-      when: cloudflared_tunnel_token | length > 0
+      when:
+        - cloudflared_tunnel_token is defined
+        - cloudflared_tunnel_token | length > 0
+        - not cloudflared_service.stat.exists
       tags: [cloudflared]
 
     - name: Ensure cloudflared service is running
@@ -445,7 +524,7 @@
         name: cloudflared
         state: started
         enabled: true
-      when: cloudflared_tunnel_token | length > 0
+      when: cloudflared_tunnel_token is defined and cloudflared_tunnel_token | length > 0 and not ansible_check_mode
       tags: [cloudflared]
 
     # ==================================================================
@@ -491,6 +570,7 @@
         name: systemd-timesyncd
         state: started
         enabled: true
+      when: not ansible_check_mode
       tags: [time]
 
     - name: Enable node_exporter
@@ -498,64 +578,65 @@
         name: prometheus-node-exporter
         state: started
         enabled: true
+      when: not ansible_check_mode
       tags: [metrics]
 
     # ==================================================================
     # DietPi-Backup → local Debian NFS server
     # ==================================================================
-    - name: Create backup mountpoint
-      ansible.builtin.file:
-        path: "{{ backup_mountpoint }}"
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-      tags: [backup]
+    # - name: Create backup mountpoint
+    #   ansible.builtin.file:
+    #     path: "{{ backup_mountpoint }}"
+    #     state: directory
+    #     owner: root
+    #     group: root
+    #     mode: "0755"
+    #   tags: [backup]
 
-    - name: Add NFS mount for DietPi-Backup target
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        regexp: "^{{ backup_nfs_server | regex_escape() }}:{{ backup_nfs_export | regex_escape() }}\\s+{{ backup_mountpoint | regex_escape() }}\\s+nfs"
-        line: "{{ backup_nfs_server }}:{{ backup_nfs_export }} {{ backup_mountpoint }} nfs defaults,_netdev 0 0"
-        state: present
-      tags: [backup]
+    # - name: Add NFS mount for DietPi-Backup target
+    #   ansible.builtin.lineinfile:
+    #     path: /etc/fstab
+    #     regexp: "^{{ backup_nfs_server | regex_escape() }}:{{ backup_nfs_export | regex_escape() }}\\s+{{ backup_mountpoint | regex_escape() }}\\s+nfs"
+    #     line: "{{ backup_nfs_server }}:{{ backup_nfs_export }} {{ backup_mountpoint }} nfs defaults,_netdev 0 0"
+    #     state: present
+    #   tags: [backup]
 
-    - name: Mount NFS backup target
-      ansible.builtin.command: mount -a
-      changed_when: false
-      tags: [backup]
+    # - name: Mount NFS backup target
+    #   ansible.builtin.command: mount -a
+    #   changed_when: false
+    #   tags: [backup]
 
-    - name: Ensure NFS backup target is mounted
-      ansible.builtin.command: mountpoint -q {{ backup_mountpoint }}
-      register: backup_mount_check
-      changed_when: false
-      tags: [backup]
+    # - name: Ensure NFS backup target is mounted
+    #   ansible.builtin.command: mountpoint -q {{ backup_mountpoint }}
+    #   register: backup_mount_check
+    #   changed_when: false
+    #   tags: [backup]
 
-    - name: Fail if backup mount is not available
-      ansible.builtin.fail:
-        msg: "Backup mount {{ backup_mountpoint }} is not available. Check NFS server/export."
-      when: backup_mount_check.rc != 0
-      tags: [backup]
+    # - name: Fail if backup mount is not available
+    #   ansible.builtin.fail:
+    #     msg: "Backup mount {{ backup_mountpoint }} is not available. Check NFS server/export."
+    #   when: backup_mount_check.rc != 0
+    #   tags: [backup]
 
-    - name: Configure DietPi-Backup settings file
-      ansible.builtin.copy:
-        dest: /boot/dietpi/.dietpi-backup_settings
-        mode: "0644"
-        content: |
-          FP_TARGET={{ backup_mountpoint }}
-          DAILY_BACKUP=0
-          AMOUNT={{ backup_amount }}
-      tags: [backup]
+    # - name: Configure DietPi-Backup settings file
+    #   ansible.builtin.copy:
+    #     dest: /boot/dietpi/.dietpi-backup_settings
+    #     mode: "0644"
+    #     content: |
+    #       FP_TARGET={{ backup_mountpoint }}
+    #       DAILY_BACKUP=0
+    #       AMOUNT={{ backup_amount }}
+    #   tags: [backup]
 
-    - name: Install DietPi-Backup daily cron (to NFS target)
-      ansible.builtin.copy:
-        dest: /etc/cron.d/dietpi_backups
-        mode: "0644"
-        content: |
-          # Daily DietPi-Backup to NFS target
-          # Uses DietPi's rsync-based backup system; FP_TARGET set in /boot/dietpi/.dietpi-backup_settings
-          {{ backup_daily_hour }} 3 * * * root export G_INTERACTIVE=0; /boot/dietpi/dietpi-backup 1 {{ backup_mountpoint }} >/dev/null 2>&1
-      tags: [backup]
+    # - name: Install DietPi-Backup daily cron (to NFS target)
+    #   ansible.builtin.copy:
+    #     dest: /etc/cron.d/dietpi_backups
+    #     mode: "0644"
+    #     content: |
+    #       # Daily DietPi-Backup to NFS target
+    #       # Uses DietPi's rsync-based backup system; FP_TARGET set in /boot/dietpi/.dietpi-backup_settings
+    #       {{ backup_daily_hour }} 3 * * * root export G_INTERACTIVE=0; /boot/dietpi/dietpi-backup 1 {{ backup_mountpoint }} >/dev/null 2>&1
+    #   tags: [backup]
 
     # ==================================================================
     # SD-wear housekeeping (apt cache)
@@ -569,8 +650,204 @@
           apt-get clean
       tags: [sd_wear, housekeeping]
 
+    # ==================================================================
+    # Monitoring collectors setup
+    # ==================================================================
+    - name: Install Node.js
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      tags: [collectors]
+
+    - name: Create monitoring group
+      ansible.builtin.group:
+        name: monitoring
+        state: present
+      tags: [collectors]
+
+    - name: Create monitoring user
+      ansible.builtin.user:
+        name: monitoring
+        group: monitoring
+        shell: /bin/false
+        system: yes
+        create_home: no
+        groups: www-data
+        append: yes
+      tags: [collectors]
+
+    - name: Create monitoring log directory
+      ansible.builtin.file:
+        path: "{{ collectors_log_dir }}"
+        state: directory
+        owner: monitoring
+        group: monitoring
+        mode: "0755"
+      tags: [collectors]
+
+    - name: Create API directory
+      ansible.builtin.file:
+        path: "{{ collectors_api_dir }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "2775"
+      tags: [collectors]
+
+    - name: Create collectors application directory
+      ansible.builtin.file:
+        path: "{{ collectors_app_dir }}"
+        state: directory
+        owner: monitoring
+        group: monitoring
+        mode: "0755"
+      tags: [collectors]
+
+    - name: Install npm
+      ansible.builtin.apt:
+        name: npm
+        state: present
+      tags: [collectors]
+
+    - name: Create collectors subdirectories
+      ansible.builtin.file:
+        path: "{{ collectors_app_dir }}/{{ item }}"
+        state: directory
+        owner: monitoring
+        group: monitoring
+        mode: "0755"
+      loop:
+        - collectors
+        - static/js
+      tags: [collectors]
+
+    - name: Deploy collector scripts
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item.src }}"
+        dest: "{{ collectors_app_dir }}/{{ item.dest }}"
+        owner: monitoring
+        group: monitoring
+        mode: "0644"
+      loop:
+        - {
+            src: "collectors/power-collector.js",
+            dest: "collectors/power-collector.js",
+          }
+        - {
+            src: "collectors/weather-collector.js",
+            dest: "collectors/weather-collector.js",
+          }
+        - {
+            src: "collectors/calendar-collector.js",
+            dest: "collectors/calendar-collector.js",
+          }
+        - {
+            src: "collectors/data-orchestrator.js",
+            dest: "collectors/data-orchestrator.js",
+          }
+      tags: [collectors]
+
+    - name: Deploy static JS modules needed by collectors
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item.src }}"
+        dest: "{{ collectors_app_dir }}/{{ item.dest }}"
+        owner: monitoring
+        group: monitoring
+        mode: "0644"
+      loop:
+        - { src: "static/js/weather.js", dest: "static/js/weather.js" }
+        - {
+            src: "static/js/parse_calendar.js",
+            dest: "static/js/parse_calendar.js",
+          }
+      tags: [collectors]
+
+    - name: Deploy systemd service files
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item }}"
+        dest: "/etc/systemd/system/{{ item | basename }}"
+        mode: "0644"
+      loop:
+        - collectors/systemd/power-collector.service
+        - collectors/systemd/weather-collector.service
+        - collectors/systemd/calendar-collector.service
+        - collectors/systemd/data-orchestrator.service
+      notify: Reload systemd
+      tags: [collectors]
+
+    - name: Update WorkingDirectory in service files
+      ansible.builtin.lineinfile:
+        path: "/etc/systemd/system/{{ item }}"
+        regexp: "^WorkingDirectory="
+        line: "WorkingDirectory={{ collectors_app_dir }}"
+      loop:
+        - power-collector.service
+        - weather-collector.service
+        - calendar-collector.service
+        - data-orchestrator.service
+      notify: Reload systemd
+      tags: [collectors]
+
+    - name: Deploy systemd timer files
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item }}"
+        dest: "/etc/systemd/system/{{ item | basename }}"
+        mode: "0644"
+      loop:
+        - collectors/systemd/power-collector.timer
+        - collectors/systemd/weather-collector.timer
+        - collectors/systemd/calendar-collector.timer
+        - collectors/systemd/data-orchestrator.timer
+      notify: Reload systemd
+      tags: [collectors]
+
+    - name: Enable and start collector timers
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: yes
+        daemon_reload: yes
+      loop:
+        - power-collector.timer
+        - weather-collector.timer
+        - calendar-collector.timer
+        - data-orchestrator.timer
+      tags: [collectors]
+
+    - name: Ensure collectors are running
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - power-collector.service
+        - weather-collector.service
+        - calendar-collector.service
+        - data-orchestrator.service
+      tags: [collectors]
+
+    - name: Configure logrotate for collector logs
+      ansible.builtin.copy:
+        dest: /etc/logrotate.d/monitoring-collectors
+        mode: "0644"
+        content: |
+          {{ collectors_log_dir }}/*.log {
+              daily
+              rotate 7
+              compress
+              delaycompress
+              missingok
+              notifempty
+              create 0644 monitoring monitoring
+          }
+      tags: [collectors]
+
   handlers:
     - name: Restart ssh
       ansible.builtin.service:
         name: ssh
         state: restarted
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
