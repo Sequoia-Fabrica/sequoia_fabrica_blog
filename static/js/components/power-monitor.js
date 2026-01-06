@@ -58,46 +58,31 @@ class PowerMonitor {
     </svg>`;
   }
 
-  // ----- Robust current normalization (mA, signed) -----
-  // ----- Robust current normalization (mA, signed) -----
+  // ----- Current normalization from ESP32 shunt monitor -----
   normalizeCurrent(data) {
     const n = (x) => (Number.isFinite(+x) ? +x : NaN);
 
-    // helpers
-    const pickBusV = () => {
-      const v1 = n(data.esp32_v_V);
-      if (Number.isFinite(v1) && v1 > 0) return v1;
-      const v2 = n(data.axp_batt_v_V);
-      if (Number.isFinite(v2) && v2 > 0) return v2;
-      const v3 = n(data.ac_V);
-      return Number.isFinite(v3) && v3 > 0 ? v3 : NaN;
-    };
-
     let i_mA = n(data.esp32_i_mA);
     const p_mW = n(data.esp32_p_mW);
-    const v_V = pickBusV();
+    const v_V = n(data.esp32_v_V);
     const load_W = n(data.load_W);
 
     // Fallback A: derive from ESP power/voltage (p[mW]/v[V] -> mA)
     if (
       !Number.isFinite(i_mA) &&
       Number.isFinite(p_mW) &&
-      Number.isFinite(v_V)
+      Number.isFinite(v_V) &&
+      v_V > 0
     ) {
       i_mA = p_mW / v_V; // signed mA
     }
 
-    // Fallback B: AXP CURRENT_NOW in µA -> mA
-    if (!Number.isFinite(i_mA)) {
-      const axp_uA = n(data.axp_current_uA);
-      if (Number.isFinite(axp_uA)) i_mA = axp_uA / 1000.0;
-    }
-
-    // Fallback C: derive from total load_W and bus voltage (assume discharge negative)
+    // Fallback B: derive from total load_W and bus voltage (assume discharge negative)
     if (
       !Number.isFinite(i_mA) &&
       Number.isFinite(load_W) &&
-      Number.isFinite(v_V)
+      Number.isFinite(v_V) &&
+      v_V > 0
     ) {
       i_mA = -(load_W / v_V) * 1000.0;
     }
@@ -107,32 +92,35 @@ class PowerMonitor {
       Number.isFinite(i_mA) &&
       Math.abs(i_mA) > 10000 &&
       Number.isFinite(p_mW) &&
-      Number.isFinite(v_V)
+      Number.isFinite(v_V) &&
+      v_V > 0
     ) {
       i_mA = p_mW / v_V;
     }
 
-    // Guard 2: cross-check INA power vs AXP load; if >4× apart, trust load_W and derive
+    // Guard 2: cross-check shunt power vs load; if >4× apart, trust load_W and derive
     if (
       Number.isFinite(i_mA) &&
       Number.isFinite(p_mW) &&
       Number.isFinite(v_V) &&
-      Number.isFinite(load_W)
+      Number.isFinite(load_W) &&
+      v_V > 0
     ) {
-      const ina_W = Math.abs(p_mW) / 1000.0;
+      const shunt_W = Math.abs(p_mW) / 1000.0;
       const floorW = Math.max(load_W, 0.5); // avoid tiny denominators
-      if (ina_W > 4 * floorW) {
+      if (shunt_W > 4 * floorW) {
         const alt_mA = -(load_W / v_V) * 1000.0; // discharge negative
         if (Number.isFinite(alt_mA)) i_mA = alt_mA;
       }
     }
 
-    // Guard 3 (new): even if p_mW is missing, if |i| is absurd and we have load_W & V, override from load/V
+    // Guard 3: even if p_mW is missing, if |i| is absurd and we have load_W & V, override from load/V
     if (
       Number.isFinite(i_mA) &&
       Math.abs(i_mA) > 10000 &&
       Number.isFinite(load_W) &&
-      Number.isFinite(v_V)
+      Number.isFinite(v_V) &&
+      v_V > 0
     ) {
       i_mA = -(load_W / v_V) * 1000.0;
     }
@@ -151,13 +139,11 @@ class PowerMonitor {
 
   populatePowerData(data) {
     const loadW = this.safeNumber(data.load_W);
-    const axpBattV = this.safeNumber(data.axp_batt_v_V);
-    const shuntV = this.safeNumber(data.esp32_v_V);
+    const batteryV = this.safeNumber(data.esp32_v_V);
     const i_mA = this.normalizeCurrent(data); // use normalized current
     const socPct = this.safeInt(data.soc_pct);
     const cpuTemp = data.cpu_temp_c;
     const cpuLoad = data.cpu_load_15min;
-    const backupSoc = this.safeNumber(data.axp_batt_capacity);
 
     const sparklines = data.sparklines || {};
 
@@ -177,16 +163,9 @@ class PowerMonitor {
             : ""),
       ],
       [
-        "Voltage (power supply)",
-        (this.isPresent(axpBattV) ? this.formatUnit(axpBattV, "V") : "—") +
-          (this.isPresent(axpBattV)
-            ? this.createSparklineSVG(sparklines.voltageAxp)
-            : ""),
-      ],
-      [
-        "Voltage (battery bus)",
-        (this.isPresent(shuntV) ? this.formatUnit(shuntV, "V") : "—") +
-          (this.isPresent(shuntV)
+        "Voltage",
+        (this.isPresent(batteryV) ? this.formatUnit(batteryV, "V") : "—") +
+          (this.isPresent(batteryV)
             ? this.createSparklineSVG(sparklines.voltage)
             : ""),
       ],
@@ -208,19 +187,12 @@ class PowerMonitor {
       ],
       ["Status", this.styleStatus(data.fmt?.status || "—")],
       [
-        "Main battery SOC",
+        "Battery SOC",
         (this.isPresent(data.fmt?.soc)
           ? this.stylePercentage(data.fmt.soc)
           : "—") +
           (socPct ? this.createSparklineSVG(sparklines.mainBattery) : ""),
-      ],
-      [
-        "Backup battery SOC",
-        (this.isPresent(data.fmt?.axp_batt?.capacity)
-          ? this.stylePercentage(data.fmt.axp_batt.capacity)
-          : "—") +
-          (backupSoc ? this.createSparklineSVG(sparklines.backupBattery) : ""),
-      ],
+      ]
     ];
 
     const serverElement = document.getElementById("server");
