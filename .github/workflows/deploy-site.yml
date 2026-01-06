@@ -51,7 +51,7 @@ jobs:
       - name: rsync deploy static site
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -avzr --delete --exclude='/api' --exclude='.git*'
+          switches: -rlptDvzr --delete --exclude='/api' --exclude='.git*'
           path: built-site/
           remote_path: /var/www/html/
           remote_host: sol.cloudforest-perch.ts.net
@@ -62,7 +62,7 @@ jobs:
       - name: rsync deploy collectors
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -avz
+          switches: -rlptDvz
           path: collectors/
           remote_path: /opt/sequoia_fabrica_blog/collectors/
           remote_host: sol.cloudforest-perch.ts.net
