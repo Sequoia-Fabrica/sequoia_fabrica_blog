@@ -73,7 +73,7 @@ jobs:
       - name: Restart collector services
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: sol.cloudforest-perch.ts.net
+          host: 100.91.222.51
           username: sol
           key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           script: |
