@@ -48,7 +48,7 @@ jobs:
           tags: tag:ci
 
       # rsync over changed files
-      - name: rsync deploy
+      - name: rsync deploy static site
         uses: burnett01/rsync-deployments@7.0.2
         with:
           switches: -avzr --delete --exclude='/api' --exclude='.git*'
@@ -58,4 +58,28 @@ jobs:
           remote_user: sol
           remote_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
 
-      
+      # Deploy collector scripts
+      - name: rsync deploy collectors
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avz
+          path: collectors/
+          remote_path: /opt/sequoia_fabrica_blog/collectors/
+          remote_host: sol.cloudforest-perch.ts.net
+          remote_user: sol
+          remote_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+
+      # Restart collector services to load updated scripts
+      - name: Restart collector services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: sol.cloudforest-perch.ts.net
+          username: sol
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            sudo systemctl restart power-collector.service
+            sudo systemctl restart data-orchestrator.service
+            sudo systemctl restart weather-collector.service
+            sudo systemctl restart calendar-collector.service
+
+
