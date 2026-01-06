@@ -4,6 +4,7 @@ summary: ""
 slug: "faq"
 url: "faq"
 featured_image: ""
+aliases: ["/docs/faq"]
 ---
 
 - [Where are you located?](#where-are-you-located)
@@ -22,10 +23,9 @@ featured_image: ""
 - [Why did you choose the name Sequoia Fabrica?](#why-did-you-choose-the-name-sequoia-fabrica)
 - [What is a Grove?](#what-is-a-grove)
 
-
 ## Where are you located?
 
-Sequoia Fabrica is located at 1736 18th Street in San Francisco’s Potrero Hill neighborhood ([OpenStreetMap](https://www.openstreetmap.org/node/11571985859) or [Google Maps](https://maps.app.goo.gl/7fiutyz9KxsT1eXc7)).
+Sequoia Fabrica is located at 1736 18th Street in San Francisco's Potrero Hill neighborhood ([OpenStreetMap](https://www.openstreetmap.org/node/11571985859) or [Google Maps](https://maps.app.goo.gl/7fiutyz9KxsT1eXc7)).
 
 Our workshop is near several major bus lines (19, 22, 55), a bike lane (on 17th Street), and there is street parking in the neighborhood.
 
@@ -34,15 +34,16 @@ Our facility is at sidewalk level, please enter through the glass double doors.
 ## How can I access the space?
 
 The makerspace is open to the general public for regular, hosted [events and workshops](param:events). Anyone is welcome to sign up and attend these! RSVP is required, unless stated.
- 
-If you’d like access to the facility or to use equipment at other times, you must [become a member](/membership) or [volunteer](https://wiki.sequoiafabrica.org/wiki/Volunteers)!
+
+If you'd like access to the facility or to use equipment at other times, you must [become a member](/membership) or [volunteer](https://wiki.sequoiafabrica.org/wiki/Volunteers)!
 
 If this model does not meet your needs, there are many [makerspaces in the Bay Area](https://makernexuswiki.com/wiki/Maker_Spaces_In_San_Francisco_area) and [around the world](https://wiki.hackerspaces.org/List_of_Hacker_Spaces).
 
 ## What tools do you have?
 
-Tools are regularly changing. For a full list, [see our wiki](param:wiki).
-Below is an abridged list of some tools.
+Our makerspace has a variety of sewing and knitting machines, a floor loom, soldering irons, power and hand tools for woodworking, 3d printers, laser cutters, a risograph, and more. Find a detailed list of tools [on our wiki](param:wiki).
+
+Tools are regularly changing. Below is an abridged list of some tools.
 
 **Textiles:**
 Domestic sewing machines,
@@ -51,7 +52,7 @@ Knitting machines,
 Industrial serger,
 Industrial straight stitch sewing machine,
 Industrial walking foot sewing machine,
-Screenprinting Supplies.
+Screenprinting supplies.
 
 **Woodworking:**
 Makita cordless track saw,
@@ -67,23 +68,25 @@ Cricut Vinyl Cutter.
 
 ## Can I have a tour?
 
-Our workshop is run by volunteers and we typically do not have the capacity to schedule one-off tours.
+Our workshop is run by volunteers and we do not yet have the capacity to schedule one-off tours.
 
-If you'd like to see the space please [sign up for an event](param:wiki). If you're an organization looking to partner, please [reach out to us](/contact).
+To see the space, we recommend [signing up for an event](param:events).
+
+If you're an organization looking to partner, or representing a school class or visiting delegation, please [reach out to us](/contact).
 
 ## When will you have a class on _{some topic}_?
 
-Instructors are volunteers, so classes vary by month and are added weekly.
+Instructors are volunteers, so classes vary by month and are added weekly!
 
 If a class is sold out, join the waiting list. This helps us gauge demand, we'll reach out if we add a new session.
 
-If you want to volunteer to teach a class, [email us](/contact).
+If you want to volunteer to teach a class or have class suggestions, [email us](/contact).
 
 ## How does membership work?
 
-All prospective members should visit our space, complete an application, and sign up for an orientation. The Board and membership evaluate all applications. If approved, you will be asked to pay dues and receive a key. Members get access to our Slack and can participate in Sequoia Fabrica meetings.
+All prospective members should visit our space, complete an application, and sign up for an orientation. You will be asked to pay dues and receive a door code. Members get access to our Slack and can participate in Sequoia Fabrica meetings.
 
-Members are responsible for contributing to the upkeep of our shared space. Hosting classes is encouraged, you don’t need to be a subject matter expert!
+Members are responsible for contributing to the upkeep of our shared space. Hosting classes is encouraged, you do not need to be a subject matter expert!
 
 Please review our [membership page](/membership) for more information.
 
@@ -91,7 +94,7 @@ You must be 18 years of age or older to become a member. Members may bring famil
 
 ## How much does membership cost?
 
-Monthly dues are similar to other Bay Area workshops, $100-150 a month.
+Our monthly dues are $100-150 a month. This is similar to other Bay Area workshops.
 
 We would like to offer more flexible dues in the future, provided we can find a funding source and meet all expenses.
 
@@ -119,9 +122,9 @@ Yes, scholarships are available for classes. Please [fill out our form](https://
 
 ## **Are you a non-profit? 501(c)(3)?**
 
-Yes. Sequoia Fabrica is a California Public Benefit Corporation and the IRS has determined it is a public charity under IRC Section 501(c)(3). Donations are tax-deductable for federal purposes to the extent allowed by law.
+Yes. Sequoia Fabrica is a California Public Benefit Corporation and the IRS has determined it is a public charity under IRC Section 501(c)(3). Donations are tax-deductible for federal purposes to the extent allowed by law.
 
-You can [view the final determination letter here](https://static.miraheze.org/sequoiafabricawiki/8/86/FinalLetter_93-4496044_SEQUOIAFABRICA_01132024_00.pdf).
+You can [view the final determination letter here](https://static.miraheze.org/sequoiafabricawiki/8/86/FinalLetter_93-4496044_SEQUOIAFABRICA_01132024_00.pdf) and find more documents on our [wiki](param:wiki).
 
 EIN: 93-4496044
 
@@ -134,14 +137,18 @@ Loans are not tax-deductible, and we cannot promise the equipment will remain in
 
 ## Why did you start another space?
 
-San Francisco needs more workshops and 2023-24 is a window of opportunity for non-profits and arts organizations to find affordable space in the city.
+We saw an unmet need for a community serving makerspace and 2024 offered an opportunity to find affordable rental space in San Francisco.
 
-Our organization offers:
+Sequoia Fabrica provides:
 
-* High quality tools and infrastructure for local artists, makers, and creators
-* A clean and safe environment where members and visitors can focus on projects
-* Robust public program of workshops, trainings, and community partnerships
-* Culture that encourages teaching and learning
+* Workshops and trainings open to the general public
+* Community partnerships with education and cultural institutions
+* High quality tools and infrastructure for artists, makers, and creators
+
+Our organization includes:
+
+* A clean and safe environment where members and visitors can focus on projects, teaching and learning
+* Intergenerational content for youth, adults, and elders
 * Straight-forward governance and financial stability
 
 ## Why did you choose the name Sequoia Fabrica?
@@ -152,6 +159,6 @@ Fabrica comes from the Latin word meaning workshop or factory. It also evokes fa
 
 Conveniently, our initials are S.F.
 
-## What is a Grove?
+## What is a Grove? {#what_is_a_grove}
 
 A [Grove](https://wiki.sequoiafabrica.org/wiki/Grove) is the term we use to describe smaller interest groups of maintainers and organizers within Sequoia Fabrica. Individuals will join a Grove that relates to their interests and the tools they use, such as electronics, sewing, or woodcraft. If it does not yet exist, they can lobby the community to start a new Grove.

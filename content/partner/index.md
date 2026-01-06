@@ -3,13 +3,18 @@ title: "Partnerships"
 slug: "partner"
 url: "partner"
 featured_image: ""
+aliases: ["/docs/partner"]
 ---
 
 Reach out to us at <a href="mailto:{{< param email >}}">{{< param email >}}</a> and let's discuss how we can make something amazing together!
 
 ## Community Collaboration
 
-We've worked with schools, governments, and nonprofit agencies to make arts, crafts, technology workshops and expertise accessible to a wider audience. Let's explore how we can work together.
+We work with schools, libraries, museums, and nonprofit agencies to make arts, crafts, technology workshops and expertise accessible to a wider audience. Let's explore how we can work together.
+
+## Teach a Class
+
+We're always looking for new volunteer instructors! Learn about [teaching at Sequoia Fabrica](/teach).
 
 ## Build a Stronger Team
 
