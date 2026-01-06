@@ -135,26 +135,20 @@ async function getSparklineDataFromPowerLog() {
             count: 0,
             sums: {
               v: 0, i: 0, p: 0, soc: 0, load_w: 0,
-              cpu_temp: 0, cpu_load: 0, axp_capacity: 0,
-              // ESP32 specific sums
-              esp32_v: 0, esp32_i: 0, esp32_p: 0, esp32_soc: 0,
-              // AXP specific sums  
-              axp_v: 0, axp_i: 0, axp_p: 0, axp_soc: 0
+              cpu_temp: 0, cpu_load: 0
             },
           });
         }
 
         const bucket = buckets.get(bucketTime);
-        // Legacy fields (for backward compatibility) - use new field names
-        bucket.sums.v += safeFloat(entry.esp32_v_V, 1) || 0; // ESP32 voltage for battery bus
-        bucket.sums.axp_v += safeFloat(entry.axp_batt_v_V, 1) || 0; // AXP voltage for power supply
-        bucket.sums.i += safeFloat(entry.esp32_i_mA, 1) || 0; // Keep in mA for frontend
-        bucket.sums.p += safeFloat(entry.esp32_p_mW, 1) || 0; // Keep in mW for frontend
-        bucket.sums.soc += safeFloat(entry.soc, 1) * 100 || 0; // Main battery SOC (now ESP32-based) to percentage
-        bucket.sums.load_w += safeFloat(entry.load_W, 1) || 0; // Use AXP-calculated load power
+        // ESP32 shunt monitor data
+        bucket.sums.v += safeFloat(entry.esp32_v_V, 1) || 0; // Battery voltage
+        bucket.sums.i += safeFloat(entry.esp32_i_mA, 1) || 0; // Current in mA
+        bucket.sums.p += safeFloat(entry.esp32_p_mW, 1) || 0; // Power in mW
+        bucket.sums.soc += safeFloat(entry.soc, 1) * 100 || 0; // Battery SOC to percentage
+        bucket.sums.load_w += safeFloat(entry.load_W, 1) || 0; // Load power from shunt
         bucket.sums.cpu_temp += safeFloat(entry.cpu_temp_c, 1) || 0;
         bucket.sums.cpu_load += safeFloat(entry.cpu_load_15min, 1) || 0;
-        bucket.sums.axp_capacity += safeFloat(entry.axp_batt_capacity, 1) || 0; // AXP SOC to percentage
 
         bucket.count++;
       } catch (e) {
@@ -172,9 +166,6 @@ async function getSparklineDataFromPowerLog() {
       voltage: sortedBuckets.map(([, bucket]) =>
         bucket.count > 0 ? bucket.sums.v / bucket.count : 0
       ),
-      voltageAxp: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? bucket.sums.axp_v / bucket.count : 0
-      ),
       currentDraw: sortedBuckets.map(([, bucket]) =>
         bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0
       ),
@@ -189,10 +180,7 @@ async function getSparklineDataFromPowerLog() {
       ),
       cpuLoad: sortedBuckets.map(([, bucket]) =>
         bucket.count > 0 ? bucket.sums.cpu_load / bucket.count : 0
-      ),
-      backupBattery: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? bucket.sums.axp_capacity / bucket.count : 0
-      ),
+      )
     };
   } catch (error) {
     console.warn("Failed to analyze power log for sparklines:", error.message);
@@ -204,13 +192,11 @@ function createEmptySparklineData() {
   return {
     timestamps: [],
     voltage: [],
-    voltageAxp: [],
     currentDraw: [],
     powerUsage: [],
     mainBattery: [],
     cpuTemp: [],
-    cpuLoad: [],
-    backupBattery: [],
+    cpuLoad: []
   };
 }
 
@@ -274,14 +260,13 @@ async function generateStatsJson() {
 
     // Calculate derived values
     const loadW = powerMetrics.load_W || 0;
-    const axpBattV = powerMetrics.axp_batt_v_V || 0;
     const esp32V = powerMetrics.esp32_v_V || 0;
     const socPct = Math.round((powerMetrics.soc || 0) * 100);
 
     // Get sparkline data
     const sparklines = await getSparklineDataFromPowerLog();
 
-    // Create comprehensive stats object compatible with existing frontend
+    // Create comprehensive stats object
     const stats = {
       // Meta information
       local_time: new Date().toLocaleString(),
@@ -292,20 +277,12 @@ async function generateStatsJson() {
       load_W: loadW,
       p_in_W: powerMetrics.p_in_W || 0,
 
-      // Battery metrics - AXP20x PMIC
-      axp_batt_v_V: axpBattV,
-      axp_batt_i_mA: powerMetrics.axp_batt_i_mA || 0,
-      axp_batt_i_A: powerMetrics.axp_batt_i_mA ? powerMetrics.axp_batt_i_mA / 1000 : 0,
-
       // Battery metrics - ESP32 shunt monitor
       esp32_v_V: esp32V,
-      esp32_i_mA: powerMetrics.esp32_i_mA || null,
-      esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : null,
+      esp32_i_mA: powerMetrics.esp32_i_mA || 0,
+      esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : 0,
       soc_pct: socPct,
-      status: powerMetrics.status || "unknown",
-
-      // AXP20x metrics
-      axp_batt_capacity: powerMetrics.axp_batt_capacity || 0,
+      status: powerMetrics.status || "Unknown",
 
       // System metrics
       cpu_temp_c: powerMetrics.cpu_temp_c,
@@ -321,10 +298,7 @@ async function generateStatsJson() {
           load_15min: fmt(powerMetrics.cpu_load_15min || 0, 2),
         },
         soc: socPct > 0 ? `${socPct}%` : "—",
-        status: powerMetrics.status || "—",
-        axp_batt: {
-          capacity: powerMetrics.axp_batt_capacity ? `${powerMetrics.axp_batt_capacity}%` : "—"
-        }
+        status: powerMetrics.status || "—"
       }
     };
 
