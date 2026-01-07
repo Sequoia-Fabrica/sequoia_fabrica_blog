@@ -1,0 +1,48 @@
+name: Validate Ansible (PR Check)
+
+on:
+  pull_request:
+    paths:
+      - 'ansible/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Ansible syntax check
+        run: ansible-playbook --syntax-check ansible/sol.yml
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H sol.cloudforest-perch.ts.net >> ~/.ssh/known_hosts
+
+      - name: Ansible check mode (preview changes)
+        run: |
+          ansible-playbook --check --diff \
+            ansible/sol.yml \
+            -i ansible/inventory.ini \
+            -e "deploy_public_key='${{ secrets.DEPLOY_PUBLIC_KEY }}'" \
+            -e "tailscale_authkey='${{ secrets.TAILSCALE_AUTHKEY }}'" \
+            -e "loggly_account='${{ secrets.LOGGLY_ACCOUNT }}'" \
+            -e "loggly_token='${{ secrets.LOGGLY_TOKEN }}'" \
+            -e "loggly_username='${{ secrets.LOGGLY_USERNAME }}'" \
+            -e "cloudflared_tunnel_token='${{ secrets.CLOUDFLARED_TUNNEL_TOKEN }}'"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/id_rsa

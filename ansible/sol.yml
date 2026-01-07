@@ -121,6 +121,16 @@
       when: deploy_public_key is defined
       tags: [user, ssh]
 
+    - name: Configure passwordless sudo for Ansible automation
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/sol-ansible
+        mode: "0440"
+        content: |
+          # Allow sol user to run Ansible playbook tasks without password
+          sol ALL=(ALL) NOPASSWD: ALL
+        validate: '/usr/sbin/visudo -cf %s'
+      tags: [user]
+
     - name: Harden SSH config
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
