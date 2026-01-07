@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'ansible/**'  # Don't rebuild site when only Ansible changes
 # on: [push] # on all pushes for testing
 
 jobs:
