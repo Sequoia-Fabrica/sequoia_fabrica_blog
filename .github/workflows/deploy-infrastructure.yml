@@ -55,7 +55,6 @@ jobs:
             -e "cloudflared_tunnel_token='${{ secrets.CLOUDFLARED_TUNNEL_TOKEN }}'"
 
       - name: Run Ansible playbook
-        if: false  # TODO: Remove this line after verifying check mode works
         run: |
           ansible-playbook \
             ansible/sol.yml \
