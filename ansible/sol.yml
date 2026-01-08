@@ -867,6 +867,7 @@
         state: started
         enabled: yes
         daemon_reload: yes
+      when: service_files_stat.results | selectattr('item', 'equalto', 'esp-logger.service') | map(attribute='stat.exists') | first | default(false)
       tags: [collectors]
 
     - name: Ensure collectors are running
