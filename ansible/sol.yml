@@ -684,7 +684,9 @@
         shell: /bin/false
         system: yes
         create_home: no
-        groups: www-data
+        groups:
+          - www-data
+          - dialout
         append: yes
       tags: [collectors]
 
@@ -721,6 +723,23 @@
         state: present
       tags: [collectors]
 
+    - name: Install Python packages for ESP logger
+      ansible.builtin.apt:
+        name:
+          - python3-serial
+          - python3-paho-mqtt
+        state: present
+      tags: [collectors, esp]
+
+    - name: Create ESP logger log directory
+      ansible.builtin.file:
+        path: /var/log/esp_logger
+        state: directory
+        owner: monitoring
+        group: monitoring
+        mode: "0755"
+      tags: [collectors, esp]
+
     - name: Create collectors subdirectories
       ansible.builtin.file:
         path: "{{ collectors_app_dir }}/{{ item }}"
@@ -739,7 +758,7 @@
         dest: "{{ collectors_app_dir }}/{{ item.dest }}"
         owner: monitoring
         group: monitoring
-        mode: "0644"
+        mode: "0755"
       loop:
         - {
             src: "collectors/power-collector.js",
@@ -756,6 +775,10 @@
         - {
             src: "collectors/data-orchestrator.js",
             dest: "collectors/data-orchestrator.js",
+          }
+        - {
+            src: "collectors/esp_logger.py",
+            dest: "collectors/esp_logger.py",
           }
       tags: [collectors]
 
@@ -784,6 +807,7 @@
         - collectors/systemd/weather-collector.service
         - collectors/systemd/calendar-collector.service
         - collectors/systemd/data-orchestrator.service
+        - collectors/systemd/esp-logger.service
       notify: Reload systemd
       tags: [collectors]
 
@@ -837,6 +861,14 @@
         - data-orchestrator.service
       tags: [collectors]
 
+    - name: Enable and start ESP logger service
+      ansible.builtin.systemd:
+        name: esp-logger.service
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      tags: [collectors, esp]
+
     - name: Configure logrotate for collector logs
       ansible.builtin.copy:
         dest: /etc/logrotate.d/monitoring-collectors
@@ -852,6 +884,23 @@
               create 0644 monitoring monitoring
           }
       tags: [collectors]
+
+    - name: Configure logrotate for ESP logger
+      ansible.builtin.copy:
+        dest: /etc/logrotate.d/esp-logger
+        mode: "0644"
+        content: |
+          /var/log/esp_logger/*.jsonl {
+              daily
+              rotate 30
+              compress
+              delaycompress
+              missingok
+              notifempty
+              create 0644 monitoring monitoring
+              maxsize 100M
+          }
+      tags: [collectors, esp]
 
   handlers:
     - name: Restart ssh
