@@ -814,17 +814,25 @@
       notify: Reload systemd
       tags: [collectors]
 
-    - name: Update WorkingDirectory in service files
-      ansible.builtin.lineinfile:
+    - name: Check which service files exist
+      ansible.builtin.stat:
         path: "/etc/systemd/system/{{ item }}"
-        regexp: "^WorkingDirectory="
-        line: "WorkingDirectory={{ collectors_app_dir }}"
       loop:
         - power-collector.service
         - weather-collector.service
         - calendar-collector.service
         - data-orchestrator.service
         - esp-logger.service
+      register: service_files_stat
+      tags: [collectors]
+
+    - name: Update WorkingDirectory in service files
+      ansible.builtin.lineinfile:
+        path: "/etc/systemd/system/{{ item.item }}"
+        regexp: "^WorkingDirectory="
+        line: "WorkingDirectory={{ collectors_app_dir }}"
+      loop: "{{ service_files_stat.results }}"
+      when: item.stat.exists
       notify: Reload systemd
       tags: [collectors]
 
