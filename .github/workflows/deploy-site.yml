@@ -80,6 +80,7 @@ jobs:
           username: sol
           key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           script: |
+            sudo systemctl restart esp-logger.service
             sudo systemctl restart power-collector.service
             sudo systemctl restart data-orchestrator.service
             sudo systemctl restart weather-collector.service
