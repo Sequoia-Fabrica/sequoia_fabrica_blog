@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - 'ansible/**'  # Don't rebuild site when only Ansible changes
+  workflow_dispatch:
 # on: [push] # on all pushes for testing
 
 jobs:
