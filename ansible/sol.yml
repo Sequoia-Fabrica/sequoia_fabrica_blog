@@ -164,6 +164,7 @@
         owner: www-data
         group: www-data
         mode: "0644"
+        force: no  # Don't overwrite if file exists (Hugo deploys the real homepage)
         content: |
           <!DOCTYPE html>
           <html lang="en">
