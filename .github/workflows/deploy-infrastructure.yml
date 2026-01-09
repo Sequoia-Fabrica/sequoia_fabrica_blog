@@ -14,13 +14,14 @@ on:
         default: 'main'
 
 jobs:
-  deploy:
+  # Job 1: Validate and preview changes (no approval required)
+  validate:
     runs-on: ubuntu-latest
+    # Only run validation on push events (not on workflow_dispatch)
+    if: github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.git_ref || github.ref }}
 
       - name: Install Ansible
         run: pip install ansible
@@ -42,8 +43,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H sol.cloudforest-perch.ts.net >> ~/.ssh/known_hosts
 
-      - name: Ansible check mode (dry run with diff)
+      - name: Ansible check mode (preview changes)
         run: |
+          echo "::notice::Review the diff below before approving deployment"
           ansible-playbook --check --diff \
             ansible/sol.yml \
             -i ansible/inventory.ini \
@@ -53,6 +55,41 @@ jobs:
             -e "loggly_token='${{ secrets.LOGGLY_TOKEN }}'" \
             -e "loggly_username='${{ secrets.LOGGLY_USERNAME }}'" \
             -e "cloudflared_tunnel_token='${{ secrets.CLOUDFLARED_TUNNEL_TOKEN }}'"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/id_rsa
+
+  # Job 2: Deploy with approval gate
+  deploy:
+    runs-on: ubuntu-latest
+    # Require approval for push events, but not for manual rollbacks
+    environment: ${{ github.event_name == 'push' && 'production' || '' }}
+    needs: [validate]
+    # Run if validation passed OR if this is a workflow_dispatch
+    if: always() && (needs.validate.result == 'success' || github.event_name == 'workflow_dispatch')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref || github.ref }}
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H sol.cloudforest-perch.ts.net >> ~/.ssh/known_hosts
 
       - name: Run Ansible playbook
         run: |
@@ -66,14 +103,8 @@ jobs:
             -e "loggly_username='${{ secrets.LOGGLY_USERNAME }}'" \
             -e "cloudflared_tunnel_token='${{ secrets.CLOUDFLARED_TUNNEL_TOKEN }}'"
 
-      - name: Health check
-        run: |
-          echo "Checking NGINX..."
-          curl -f http://sol.cloudforest-perch.ts.net/health
-
-          echo "Checking collector services..."
-          ssh -o StrictHostKeyChecking=no sol@sol.cloudforest-perch.ts.net \
-            "systemctl is-active power-collector.timer data-orchestrator.timer esp-logger.service"
+      - name: Comprehensive smoke tests
+        run: bash .github/scripts/smoke-tests.sh
 
       - name: Cleanup
         if: always()
