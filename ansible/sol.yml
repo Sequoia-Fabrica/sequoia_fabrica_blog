@@ -335,7 +335,11 @@
         chmod 755 /tmp/configure-linux.sh
       args:
         creates: /tmp/configure-linux.sh
-      when: not ansible_check_mode
+      when:
+        - loggly_account is defined
+        - loggly_token is defined
+        - loggly_username is defined
+        - not ansible_check_mode
       tags: [logging]
 
     - name: Run Loggly configuration script
