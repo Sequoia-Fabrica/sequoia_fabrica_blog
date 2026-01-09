@@ -328,30 +328,15 @@
     # ==================================================================
     # Loggly log forwarding (using official installation script)
     # ==================================================================
-    - name: Remove corrupted Loggly script if present
-      ansible.builtin.shell: |
-        if [ -f /tmp/configure-linux.sh ] && grep -q "<?xml" /tmp/configure-linux.sh; then
-          rm -f /tmp/configure-linux.sh
-        fi
+    - name: Deploy Loggly configuration script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/configure-linux.sh"
+        dest: /tmp/configure-linux.sh
+        mode: "0755"
       when:
         - loggly_account is defined
         - loggly_token is defined
         - loggly_username is defined
-        - not ansible_check_mode
-      tags: [logging]
-
-    - name: Download Loggly configure script
-      ansible.builtin.shell: |
-        cd /tmp
-        curl -O https://www.loggly.com/install/configure-linux.sh
-        chmod 755 /tmp/configure-linux.sh
-      args:
-        creates: /tmp/configure-linux.sh
-      when:
-        - loggly_account is defined
-        - loggly_token is defined
-        - loggly_username is defined
-        - not ansible_check_mode
       tags: [logging]
 
     - name: Run Loggly configuration script
