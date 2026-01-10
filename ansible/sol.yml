@@ -328,6 +328,16 @@
     # ==================================================================
     # Loggly log forwarding (using official installation script)
     # ==================================================================
+    - name: Remove old Loggly configuration script
+      ansible.builtin.file:
+        path: /tmp/configure-linux.sh
+        state: absent
+      when:
+        - loggly_account is defined
+        - loggly_token is defined
+        - loggly_username is defined
+      tags: [logging]
+
     - name: Deploy Loggly configuration script
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/configure-linux.sh"
