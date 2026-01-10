@@ -328,53 +328,56 @@
     # ==================================================================
     # Loggly log forwarding (using official installation script)
     # ==================================================================
-    - name: Remove old Loggly configuration script
-      ansible.builtin.file:
-        path: /tmp/configure-linux.sh
-        state: absent
-      when:
-        - loggly_account is defined
-        - loggly_token is defined
-        - loggly_username is defined
-      tags: [logging]
-
-    - name: Deploy Loggly configuration script
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/configure-linux.sh"
-        dest: /tmp/configure-linux.sh
-        mode: "0755"
-      when:
-        - loggly_account is defined
-        - loggly_token is defined
-        - loggly_username is defined
-      tags: [logging]
-
-    - name: Run Loggly configuration script
-      ansible.builtin.command: >
-        bash /tmp/configure-linux.sh
-        -a {{ loggly_account }}
-        -t {{ loggly_token }}
-        -u {{ loggly_username }}
-      args:
-        creates: /etc/rsyslog.d/22-loggly.conf
-      when:
-        - loggly_account is defined
-        - loggly_token is defined
-        - loggly_username is defined
-        - not ansible_check_mode
-      tags: [logging]
-
-    - name: Ensure rsyslog is restarted after Loggly configuration
-      ansible.builtin.service:
-        name: rsyslog
-        state: restarted
-        enabled: true
-      when:
-        - loggly_account is defined
-        - loggly_token is defined
-        - loggly_username is defined
-        - not ansible_check_mode
-      tags: [logging]
+    # TEMPORARILY DISABLED - Causing deployments to hang
+    # TODO: Debug and re-enable Loggly integration
+    #
+    # - name: Remove old Loggly configuration script
+    #   ansible.builtin.file:
+    #     path: /tmp/configure-linux.sh
+    #     state: absent
+    #   when:
+    #     - loggly_account is defined
+    #     - loggly_token is defined
+    #     - loggly_username is defined
+    #   tags: [logging]
+    #
+    # - name: Deploy Loggly configuration script
+    #   ansible.builtin.copy:
+    #     src: "{{ playbook_dir }}/configure-linux.sh"
+    #     dest: /tmp/configure-linux.sh
+    #     mode: "0755"
+    #   when:
+    #     - loggly_account is defined
+    #     - loggly_token is defined
+    #     - loggly_username is defined
+    #   tags: [logging]
+    #
+    # - name: Run Loggly configuration script
+    #   ansible.builtin.command: >
+    #     bash /tmp/configure-linux.sh
+    #     -a {{ loggly_account }}
+    #     -t {{ loggly_token }}
+    #     -u {{ loggly_username }}
+    #   args:
+    #     creates: /etc/rsyslog.d/22-loggly.conf
+    #   when:
+    #     - loggly_account is defined
+    #     - loggly_token is defined
+    #     - loggly_username is defined
+    #     - not ansible_check_mode
+    #   tags: [logging]
+    #
+    # - name: Ensure rsyslog is restarted after Loggly configuration
+    #   ansible.builtin.service:
+    #     name: rsyslog
+    #     state: restarted
+    #     enabled: true
+    #   when:
+    #     - loggly_account is defined
+    #     - loggly_token is defined
+    #     - loggly_username is defined
+    #     - not ansible_check_mode
+    #   tags: [logging]
 
     # ==================================================================
     # SD card wear minimisation
