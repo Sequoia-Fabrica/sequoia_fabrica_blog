@@ -884,16 +884,14 @@
       when: service_files_stat.results | selectattr('item', 'equalto', 'esp-logger.service') | map(attribute='stat.exists') | first | default(false)
       tags: [collectors]
 
-    - name: Ensure collectors are running
+    - name: Trigger initial collector run (data-orchestrator excluded as it depends on others)
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: started
-        enabled: yes
       loop:
         - power-collector.service
         - weather-collector.service
         - calendar-collector.service
-        - data-orchestrator.service
       tags: [collectors]
 
     - name: Configure logrotate for collector logs
