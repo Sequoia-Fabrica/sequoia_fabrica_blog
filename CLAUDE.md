@@ -94,6 +94,18 @@ NGINX → Cloudflare Tunnel → https://sequoia.garden
 - `calendar-collector.timer`: Runs calendar-collector.js hourly
 - `data-orchestrator.timer`: Runs data-orchestrator.js every 2 minutes
 
+## Git Workflow
+
+**Always create pull requests instead of pushing directly to main.** Create a feature branch, commit changes, push the branch, and open a PR for review.
+
+```bash
+git checkout -b feature/description
+# make changes
+git add . && git commit -m "Description"
+git push -u origin feature/description
+gh pr create --title "Title" --body "Description"
+```
+
 ## Deployment
 
 ### Two Deployment Workflows
