@@ -27,11 +27,15 @@ The Makefile uses Hugo with extended features via `go run -tags extended github.
 - **Solar theme variant**: Based on Low-tech Magazine's Solar v.2 theme, adapted for makerspace use
 
 ### Key Components
-- **Power monitoring system**: Real-time solar power data integration
-  - `static/js/powerinfo.js`: Node.js module for power data collection from AXP20x PMIC and INA228 shunt
-  - `static/js/script.js`: Frontend power dashboard and battery meter
+- **Power monitoring system**: Real-time solar power data from ESP32 battery monitor
+  - `collectors/power-collector.js`: Reads ESP32 data, generates power metrics
+  - `collectors/data-orchestrator.js`: Aggregates all collectors into API JSON files
+  - `static/js/components/power-monitor.js`: Frontend power dashboard with sparklines
   - API endpoint: `/api/stats.json` for power statistics
 - **Weather integration**: Weather forecast display with custom icons
+  - `collectors/weather-collector.js`: Fetches weather data
+- **Calendar integration**: Upcoming events from external calendar
+  - `collectors/calendar-collector.js`: Fetches calendar events
 - **Mobile-responsive design** with toggle menu functionality
 - **Image dithering system**: Automatic image processing for bandwidth optimization
 
@@ -53,14 +57,69 @@ The Makefile uses Hugo with extended features via `go run -tags extended github.
 - **Menu system**: Configured in hugo.toml with external links (events, donations)
 - **Python dependencies**: `utils/requirements.txt` for image processing tools
 
-### Power System Integration
-The site features live power monitoring from a solar setup:
-- Reads from AXP20x PMIC sysfs and INA228 shunt sensor
-- Displays battery SOC, power consumption, charging status
-- CPU temperature and load monitoring
-- Weather forecast integration for solar predictions
+## Power System Integration
 
-### Deployment
-- Uses GitHub Actions for automated deployment
-- Builds static site and deploys to hosting platform
-- Image optimization and size calculation in build pipeline
+The site features live power monitoring from a solar setup running on the "sol" server (Raspberry Pi with DietPi).
+
+### Data Flow
+```
+ESP32 (INA228 shunt sensor)
+    ↓ serial port (/dev/ttyUSB0 @ 115200 baud)
+esp_logger.py (continuous service)
+    ↓ writes JSON lines
+/var/log/esp_logger/esp_log.jsonl
+    ↓ read by
+power-collector.js (every 5 min via timer)
+    ↓ writes
+/var/log/monitoring/power_metrics.jsonl
+    ↓ read by
+data-orchestrator.js (every 2 min via timer)
+    ↓ generates
+/var/www/html/api/stats.json, weather.json, calendar.json
+    ↓ served by
+NGINX → Cloudflare Tunnel → https://sequoia.garden
+```
+
+### Metrics Collected
+- Battery voltage, current, power (from INA228 shunt)
+- State of charge (SOC) with coulomb counting
+- Charge phase detection (CV/float)
+- CPU temperature and load
+- 24-hour sparklines with 5-minute resolution
+
+### Systemd Services
+- `esp-logger.service`: Continuous Python service reading ESP32 serial data
+- `power-collector.timer`: Runs power-collector.js every 5 minutes
+- `weather-collector.timer`: Runs weather-collector.js hourly
+- `calendar-collector.timer`: Runs calendar-collector.js hourly
+- `data-orchestrator.timer`: Runs data-orchestrator.js every 2 minutes
+
+## Deployment
+
+### Two Deployment Workflows
+
+1. **Site Deployment** (`.github/workflows/deploy-site.yml`)
+   - Triggered on push to main (except ansible/** changes)
+   - Builds Hugo site with image dithering
+   - Rsync deploys to `/var/www/html/` on sol server
+   - Rsync deploys collectors to `/opt/sequoia_fabrica_blog/collectors/`
+   - Restarts collector services
+
+2. **Infrastructure Deployment** (`.github/workflows/deploy-infrastructure.yml`)
+   - Triggered on changes to `ansible/**` or `collectors/systemd/**`
+   - Runs Ansible playbook (`ansible/sol.yml`) to configure server
+   - Manages: NGINX, systemd services, user permissions, Tailscale, Cloudflare tunnel
+
+### Server Details
+- **Host**: sol (Raspberry Pi running DietPi)
+- **Access**: Via Tailscale (sol.cloudforest-perch.ts.net or 100.91.222.51)
+- **Public URL**: https://sequoia.garden (via Cloudflare tunnel)
+- **Deploy user**: sol (in monitoring group for collector permissions)
+- **Service user**: monitoring (runs collector services)
+
+### Key Directories on Server
+- `/var/www/html/`: Static site root (served by NGINX)
+- `/var/www/html/api/`: Generated JSON API files
+- `/opt/sequoia_fabrica_blog/`: Collector scripts and ESP logger
+- `/var/log/monitoring/`: Collector log files (power_metrics.jsonl, etc.)
+- `/var/log/esp_logger/`: ESP32 serial data log
