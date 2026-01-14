@@ -4,6 +4,7 @@ summary: ""
 featured_image: ""
 slug: "membership"
 url: "membership"
+aliases: ["/docs/membership"]
 ---
 
 ## Join Our Community
@@ -11,9 +12,9 @@ url: "membership"
 As a member, you'll have 24/7 access to tools, equipment, and space to bring your projects to life. But more importantly, you'll be part of a passionate community that thrives on sharing knowledge, exchanging ideas, and working together.
 
 ## Membership Types
-- <u>Sponsor Membership</u>  **$200 per month**. Sponsors help provide scholarships for those who can not afford classes or full membership dues.
-- <u>Standard Membership</u>  **$150 per month**. Covers the full costs of running a community workshop in San Francisco.
-- <u>Sliding Scale Membership</u> **$100-149 per month** and is intended for any who cannot otherwise afford full dues. Choose this option if you need it!
+- <u>Sponsor Membership</u> **$200 per month**. Sponsors help provide scholarships for those who cannot afford classes or full membership dues.
+- <u>Standard Membership</u> **$150 per month**. Covers the full costs of running a community workshop in San Francisco.
+- <u>Discounted Membership</u> **$100 per month** and is intended for anyone who cannot otherwise afford full dues. Choose this option if you need it!
 
 ## Getting Started with Membership
 We've tried to make the process for membership as straightforward as possible. If you have any questions throughout the process, please [reach out to us](/contact).
@@ -24,11 +25,11 @@ We've tried to make the process for membership as straightforward as possible. I
 
 3. **Sign up for an Orientation:** [Member applicant orientations](param:events) are 1st and 3rd Tuesdays at 7PM every month. If this time will not work, [get in touch](/contact).
 
-4. **Application Review** Our Board and Membership will evaluate your application. We will update you on your application status.
+4. **Application Review** Our Board and Members review new applications as they are received. We will reach out with next steps and any questions.
 
-5. **Start Paying Dues**. Membership dues are accepted through [Open Collective](param:donate). If this does not work for you, contact us.
+5. **Start Paying Dues**. Membership dues are accepted through [BookWhen](https://bookwhen.com/sequoiafabricamembers/memberships). Do not start paying dues before completing the steps above.
 
-6. **Become a Part of the Community:** Once you're a member, you will have access to the space to use as you please as long as it doesn't go against our community rules. Start using the space, join [a grove](/faq#what-is-a-grove), help us maintain the space.
+6. **Become a Part of the Community:** Once you're a member, you will be provided a key code, have access to the space to use as you please as long as it does not go against our community rules. Start using the space, join [a grove](/faq#what_is_a_grove), help us maintain our workshop.
 
 ## What Membership Means
 
@@ -37,7 +38,7 @@ We've tried to make the process for membership as straightforward as possible. I
 - **Learning Opportunities:** Members are encouraged to share skills and knowledge with each other. Through workshops, peer mentoring, Grove projects, and informal collaboration, there are always opportunities to teach and learn from one another.
 - **A Voice**: As a member, you have a say in shaping Sequoia Fabrica. You'll be able to participate in organizational meetings and decision-making. Your feedback and ideas are critical as we continue improving our community.
 
-Sequoia Fabrica is _not_ a rental workshop. Everyone is expected to help maintain the space and help with projects or events. Our volunteer-based structure is how we are able to provide an affordable space.
+Sequoia Fabrica is not a rental workshop. Everyone is expected to help maintain the space and help with projects or events. Our volunteer-based structure is how we are able to provide an affordable space.
 
 You must be 18 years of age or older to be a member. Members can bring family members or friends as their guests if working on a project together.
 

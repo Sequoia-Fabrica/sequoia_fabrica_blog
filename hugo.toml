@@ -104,8 +104,8 @@ weight = 7
 
 [[menu.main]]
 identifier = 'donate'
-name = 'Donate↗︎'
-url = 'https://opencollective.com/sequoia-fabrica'
+name = 'Donate'
+url = '/donate'
 weight = 8
 
 [taxonomies]

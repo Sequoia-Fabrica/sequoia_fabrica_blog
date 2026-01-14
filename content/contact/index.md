@@ -4,6 +4,7 @@ slug: contact
 categories: [""]
 featured_image: ""
 url: "contact"
+aliases: ["/docs/contact"]
 ---
 
 Sequoia Fabrica is run by members and volunteers. If you need to contact the board of directors, you can send an email to <a href="mailto:{{< param email >}}">{{< param email >}}</a>.

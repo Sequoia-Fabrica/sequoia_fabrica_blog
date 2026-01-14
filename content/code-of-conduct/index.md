@@ -4,20 +4,33 @@ summary: ""
 categories: [""]
 featured_image: ""
 url: "code-of-conduct"
+aliases: ["/docs/code_of_conduct"]
 ---
 
+Sequoia Fabrica is a place for tolerance and respect. We are committed to providing a welcoming environment where members and visitors can focus on learning and their projects.
 
-Sequoia Fabrica is a space for tolerance and respect. We ask members and visitors to consider how their words and actions may affect others (including people you don't know well) in a shared workspace.
+We ask all participants to consider how their words and actions may affect others (including people you do not know well) in a shared workspace.
+
+## Expected Behavior
+
+- Treat other participants with respect and courtesy
+- Maintain a harassment-free environment, free from discrimination and intimidation based on race, religion, color, national origin, ancestry, disability, medical condition, genetic information, marital or family status, sex, gender, gender identity, gender expression, age, sexual orientation, reproductive health decisionmaking, veteran or military status, etc.
+- Respect the privacy and personal space of others
+- Follow all safety procedures, use tools and materials only as instructed by maintainers
+- Report dangerous behavior, unsafe conditions, broken equipment, and other incidents promptly
+- Keep the workspace clean
 
 ## Harassment
 
 Sequoia Fabrica (SF) is dedicated to providing a harassment-free experience for everyone. Harassment can include:
 
-- Offensive comments related to a person's gender, gender identity and expression, age, sexual orientation, disability, physical appearance, body size, race, ethnicity, religion, etc.
+- Offensive comments
+- Bullying
 - Intimidation, stalking, following
 - Disrupting events
 - Threats of violence
 - Encouraging self-harm
+- Displaying hateful symbols and images
 - Continued communication after requests to stop
 - Physical contact without consent
 - Unwelcome sexual attention, unsolicited sexual images or content
@@ -25,17 +38,11 @@ Sequoia Fabrica (SF) is dedicated to providing a harassment-free experience for 
 - Harassing photography or recording, including logging online activity for harassment purposes
 - Spamming, denial of service attacks, hacking of personal devices or accounts without consent
 
-## Workshop Policies
-
-* Follow all safety procedures, use tools and materials only as instructed by maintainers
-* Report dangerous behavior, unsafe conditions, broken equipment, and other incidents promptly
-* Keep the workspace clean 
-
 ## Reporting & Enforcement
 
-All members and visitors can ask anyone violating this code of conduct or making others feel unwelcome to cease and/or leave the space. Participants asked to stop any harassing or dangerous behavior must comply immediately.
+All members and visitors can ask anyone violating this code of conduct or making others feel unwelcome to stop their behavior and/or leave the space. Participants asked to stop any harassing or dangerous behavior must comply immediately.
 
-The Board can investigate and take further action if they deem it appropriate, including warning, loss of privileges, suspension of membership, temporary or permanent expulsion from Sequoia Fabrica spaces and events without refund or notice. 
+The Board can investigate and take further action if they deem it appropriate, including warning, loss of privileges, suspension of membership, temporary or permanent expulsion from Sequoia Fabrica spaces and events without refund or notice.
 
 Contact the Board with any questions or concerns in person, by text or voicemail at (415) 935-0478, or by email at <a href="mailto:{{< param email >}}">{{< param email >}}</a>.
 

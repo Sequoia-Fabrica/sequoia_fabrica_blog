@@ -1,0 +1,60 @@
+---
+title: "Tools and Equipment"
+summary: ""
+slug: "tools"
+url: "tools"
+featured_image: ""
+aliases: ["/docs/tools"]
+---
+
+## Tools and Equipment at Sequoia Fabrica
+
+Tools available at the workshop are regularly changing. Below is an abridged list of our equipment.
+
+## Textiles
+
+- Domestic sewing machines (Janome)
+- Embroidery machine
+- Knitting machines (Brother, Raynen)
+- Industrial serger (Juki)
+- 2x industrial straight stitch sewing machine (Juki)
+- Industrial walking foot sewing machine (Juki)
+- Industrial coverstitch machine (Juki)
+- Screenprinting supplies
+- Floor loom
+- Cutting table
+
+## Woodworking
+
+- Cordless track saw (Makita)
+- Cordless power tools (DeWalt)
+- Rotary tool (Dremel, Wen)
+- Drill press (Wen)
+- Band saw
+- Variety of hand tools, workholding, etc.
+
+## Digital Fabrication
+
+- 2x Prusa MK4 3d printers
+- 2x Prusa Mini+ 3d printers
+- Bambu with AMS
+- XTool 55W CO2 laser
+- XTool F1 diode laser
+- Nomad Desktop CNC
+- Maslow4 CNC
+- Cricut Vinyl Cutter
+
+## Electronics
+
+- Weller and Hakko soldering stations
+- Portable soldering irons (various)
+- Magnifying scope
+- Meters, basic components, and soldering supplies
+
+## Printmaking
+
+- Linocut blocks and carving tools
+- Brother color laser printers
+- Risograph EZ 220 (4 drums)
+
+For more details, [see our wiki](https://wiki.sequoiafabrica.org/wiki/Main_Page).
