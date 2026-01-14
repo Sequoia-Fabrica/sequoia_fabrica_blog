@@ -116,18 +116,39 @@ This site builds custom taxonomy for `Authors` which can be accessed via `http:/
 
 ## Deployment
 
-The site is built using [Hugo](https://gohugo.io/) and deployed to our solar server on the roof. The deployment process is automated using GitHub Actions.
-When you push changes to the `main` branch, the site is automatically built and deployed to the live server.
+The site is built using [Hugo](https://gohugo.io/) and deployed to our solar-powered Raspberry Pi server "sol" on the roof. The deployment process is automated using GitHub Actions.
+When you push changes to the `main` branch, the site is automatically built and deployed to the live server at https://sequoia.garden via Cloudflare tunnel.
 
 # Deploys and Github Actions
 
 Deploys happen automatically when PRs are merged to main.
 
-There are currently 3 GitHub Actions that run:
+There are currently 4 GitHub Actions that run:
 
 1. ✅ **`Test build hugo site`** - runs on every commit to ensure the site builds without errors
-2. ✅ **`Build and deploy site`** - builds and deploys the site to the main domain (fully operational)
+2. ✅ **`Build and deploy site`** - builds and deploys the site + collectors to the server via rsync
 3. ✅ **`Deploy Hugo site to Pages`** - builds the site for GitHub Pages as a preview site
+4. ✅ **`Deploy Infrastructure (Ansible)`** - deploys infrastructure changes (systemd services, users, nginx config) when `ansible/` changes
+
+## Power Monitoring System
+
+The site features live power monitoring from our solar setup, displayed at https://sequoia.garden/power/
+
+**Hardware**:
+- ESP32 microcontroller reading battery data via I2C
+- INA228 high-precision shunt sensor measuring voltage, current, and power
+- 12V LiFePO4 battery with 100A BMS
+
+**Data Flow**:
+```
+ESP32 + INA228 → USB Serial → esp_logger.py → /var/log/esp_logger/esp_log.jsonl
+                                    ↓
+power-collector.js → data-orchestrator.js → /var/www/html/api/stats.json
+                                    ↓
+                            Website Dashboard
+```
+
+See `collectors/README.md` for detailed architecture documentation.
 
 # Additional utilities
 
