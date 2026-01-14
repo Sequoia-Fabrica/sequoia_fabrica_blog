@@ -7,6 +7,13 @@ import argparse
 import logging
 import os
 
+
+def is_safe_path(base_dir, path):
+    """Check if path is safely within base_dir (no symlink escape)"""
+    real_base = os.path.realpath(base_dir)
+    real_path = os.path.realpath(path)
+    return real_path.startswith(real_base + os.sep) or real_path == real_base
+
 parser = argparse.ArgumentParser(
     """
     This script recursively traverses folders and deletes files not in "dithers" or containing hugos resizing pattern in the filname.
@@ -61,7 +68,7 @@ def get_printable_size(byte_size):
 
 def calculate_dir_size(content_dir):
     size = 0
-    for path, dirs, files in os.walk(os.path.abspath(content_dir)):
+    for path, dirs, files in os.walk(os.path.abspath(content_dir), followlinks=False):
         for f in files:
             fp = os.path.join(path, f)
             size += os.path.getsize(fp)
@@ -87,15 +94,18 @@ count = 0
 size = calculate_dir_size(content_dir)
 
 logging.info("Directory is {} before cleanup".format(get_printable_size(size)))
-for root, dirs, files in os.walk(os.path.abspath(content_dir), topdown=True):
+for root, dirs, files in os.walk(os.path.abspath(content_dir), topdown=True, followlinks=False):
     dirs[:] = [d for d in dirs if d not in exclude_dirs]
     for fname in files:
         if fname.endswith(tuple(image_ext)):
             if pattern not in fname:
                 f = os.path.join(root, fname)
-                count += 1
-                os.remove(f)
-                logging.debug("🗑 {}".format(fname))
+                if is_safe_path(os.path.abspath(content_dir), f):
+                    count += 1
+                    os.remove(f)
+                    logging.debug("🗑 {}".format(fname))
+                else:
+                    logging.warning("Skipping unsafe path (possible symlink escape): {}".format(f))
 
 logging.info("Deleted {} original images".format(count))
 size = calculate_dir_size(content_dir)

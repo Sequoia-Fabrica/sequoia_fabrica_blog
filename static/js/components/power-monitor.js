@@ -43,16 +43,27 @@ class PowerMonitor {
         }" r="2" fill="currentColor" opacity="0.6"/>
       </svg>`;
     }
-    const min = Math.min(...data);
-    const max = Math.max(...data);
+
+    // Validate that all data points are numeric
+    const validatedData = data.filter(d => Number.isFinite(d));
+    if (validatedData.length < 2) {
+      // Return loading state if data is invalid
+      return this.createSparklineSVG([], width, height);
+    }
+
+    const min = Math.min(...validatedData);
+    const max = Math.max(...validatedData);
     const range = max - min || 1;
-    const xStep = width / (data.length - 1);
-    let pathData = `M 0,${height - ((data[0] - min) / range) * height}`;
-    for (let i = 1; i < data.length; i++) {
+    const xStep = width / (validatedData.length - 1);
+
+    // Build path using validated numeric data
+    let pathData = `M 0,${height - ((validatedData[0] - min) / range) * height}`;
+    for (let i = 1; i < validatedData.length; i++) {
       const x = i * xStep;
-      const y = height - ((data[i] - min) / range) * height;
+      const y = height - ((validatedData[i] - min) / range) * height;
       pathData += ` L ${x},${y}`;
     }
+
     return `<svg width="${width}" height="${height}" class="sparkline" viewBox="0 0 ${width} ${height}">
       <path d="${pathData}" stroke="currentColor" fill="none" stroke-width="1"/>
     </svg>`;

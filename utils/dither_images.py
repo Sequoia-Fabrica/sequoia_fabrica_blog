@@ -168,12 +168,22 @@ def dither_image(
         logging.warning(e)
 
 
+def is_safe_path(base_dir, path):
+    """Check if path is safely within base_dir (no symlink escape)"""
+    real_base = os.path.realpath(base_dir)
+    real_path = os.path.realpath(path)
+    return real_path.startswith(real_base + os.sep) or real_path == real_base
+
+
 def delete_dithers(content_dir):
     logging.info("Deleting 'dither' folders in {} and below".format(content_dir))
-    for root, dirs, files in os.walk(content_dir, topdown=True):
+    for root, dirs, files in os.walk(content_dir, topdown=True, followlinks=False):
         if root.endswith("dithers"):
-            shutil.rmtree(root)
-            logging.info("Removed {}".format(root))
+            if is_safe_path(content_dir, root):
+                shutil.rmtree(root)
+                logging.info("Removed {}".format(root))
+            else:
+                logging.warning("Skipping unsafe path (possible symlink escape): {}".format(root))
 
 
 def parse_front_matter(md):
@@ -275,7 +285,7 @@ if __name__ == "__main__":
     if args.remove:
         delete_dithers(os.path.abspath(content_dir))
     else:
-        for root, dirs, files in os.walk(os.path.abspath(content_dir), topdown=True):
+        for root, dirs, files in os.walk(os.path.abspath(content_dir), topdown=True, followlinks=False):
             logging.debug(f"Checking next folder {root}")
 
             dirs[:] = [d for d in dirs if d not in exclude_dirs]

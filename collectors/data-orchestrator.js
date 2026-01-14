@@ -32,6 +32,62 @@ const fileExists = async (p) => {
   }
 };
 
+/**
+ * Read the last N bytes from a file to avoid loading large files into memory.
+ * @param {string} filePath - Path to the file to read
+ * @param {number} maxBytes - Maximum number of bytes to read (default 1MB)
+ * @returns {Promise<string>} - The content as a UTF-8 string
+ */
+async function readLastBytes(filePath, maxBytes = 1024 * 1024) {
+  try {
+    const stat = await fsp.stat(filePath);
+    if (stat.size === 0) return '';
+
+    const readSize = Math.min(stat.size, maxBytes);
+    const start = Math.max(0, stat.size - readSize);
+
+    const fd = await fsp.open(filePath, 'r');
+    try {
+      const buffer = Buffer.alloc(readSize);
+      await fd.read(buffer, 0, readSize, start);
+      return buffer.toString('utf8');
+    } finally {
+      await fd.close();
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT') return '';
+    throw error;
+  }
+}
+
+/**
+ * Get recent JSONL entries from a file using bounded reads.
+ * Reads from the end of the file to avoid memory exhaustion on large files.
+ * @param {string} filePath - Path to the JSONL file
+ * @param {number} maxBytes - Maximum number of bytes to read (default 1MB)
+ * @returns {Promise<Array>} - Array of parsed JSON objects
+ */
+async function getRecentJsonlEntries(filePath, maxBytes = 1024 * 1024) {
+  const content = await readLastBytes(filePath, maxBytes);
+  if (!content) return [];
+
+  const lines = content.trim().split('\n');
+
+  // First line might be partial if we didn't read from start, skip it
+  const stat = await fsp.stat(filePath);
+  if (stat.size > maxBytes && lines.length > 0) {
+    lines.shift(); // Remove potentially partial first line
+  }
+
+  return lines.filter(Boolean).map(line => {
+    try {
+      return JSON.parse(line);
+    } catch {
+      return null;
+    }
+  }).filter(Boolean);
+}
+
 async function ensureDirectoryExists(dirPath) {
   try {
     await fsp.mkdir(dirPath, { recursive: true });
@@ -200,24 +256,22 @@ function createEmptySparklineData() {
   };
 }
 
-// Get the most recent power metrics from JSONL
+// Get the most recent power metrics from JSONL (with bounded read)
 async function getLatestPowerMetrics() {
   try {
     if (!(await fileExists(powerCollector.POWER_LOG_PATH))) {
       return null;
     }
 
-    const data = await fsp.readFile(powerCollector.POWER_LOG_PATH, 'utf8');
-    const lines = data.trim().split('\n').filter(Boolean);
+    // Use bounded read to avoid memory exhaustion
+    const entries = await getRecentJsonlEntries(powerCollector.POWER_LOG_PATH, 512 * 1024); // 512KB should be plenty for recent entries
 
     // Look for the most recent valid entry
-    for (let i = lines.length - 1; i >= 0; i--) {
-      try {
-        const entry = JSON.parse(lines[i]);
-        if (entry && typeof entry === 'object' && entry.ts) {
-          return entry;
-        }
-      } catch { }
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (entry && typeof entry === 'object' && entry.ts) {
+        return entry;
+      }
     }
     return null;
   } catch (error) {
@@ -314,24 +368,22 @@ async function generateStatsJson() {
   }
 }
 
-// Get the most recent weather data from JSONL
+// Get the most recent weather data from JSONL (with bounded read)
 async function getLatestWeatherData() {
   try {
     if (!(await fileExists(weatherCollector.WEATHER_LOG_PATH))) {
       return null;
     }
 
-    const data = await fsp.readFile(weatherCollector.WEATHER_LOG_PATH, 'utf8');
-    const lines = data.trim().split('\n').filter(Boolean);
+    // Use bounded read to avoid memory exhaustion
+    const entries = await getRecentJsonlEntries(weatherCollector.WEATHER_LOG_PATH, 256 * 1024); // 256KB
 
     // Look for the most recent valid entry
-    for (let i = lines.length - 1; i >= 0; i--) {
-      try {
-        const entry = JSON.parse(lines[i]);
-        if (entry && typeof entry === 'object' && entry.success && entry.data) {
-          return entry.data;
-        }
-      } catch { }
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (entry && typeof entry === 'object' && entry.success && entry.data) {
+        return entry.data;
+      }
     }
     return null;
   } catch (error) {
@@ -359,24 +411,22 @@ async function generateWeatherJson() {
   }
 }
 
-// Get the most recent calendar data from JSONL
+// Get the most recent calendar data from JSONL (with bounded read)
 async function getLatestCalendarData() {
   try {
     if (!(await fileExists(calendarCollector.CALENDAR_LOG_PATH))) {
       return null;
     }
 
-    const data = await fsp.readFile(calendarCollector.CALENDAR_LOG_PATH, 'utf8');
-    const lines = data.trim().split('\n').filter(Boolean);
+    // Use bounded read to avoid memory exhaustion
+    const entries = await getRecentJsonlEntries(calendarCollector.CALENDAR_LOG_PATH, 256 * 1024); // 256KB
 
     // Look for the most recent valid entry
-    for (let i = lines.length - 1; i >= 0; i--) {
-      try {
-        const entry = JSON.parse(lines[i]);
-        if (entry && typeof entry === 'object' && entry.success && entry.data) {
-          return entry.data;
-        }
-      } catch { }
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (entry && typeof entry === 'object' && entry.success && entry.data) {
+        return entry.data;
+      }
     }
     return null;
   } catch (error) {

@@ -6,6 +6,7 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const os = require("os");
+const { appendToJsonlSafe } = require("./jsonl-utils.js");
 
 // ---------- CONFIG ----------
 const LOGS_DIR = "/var/log/monitoring";
@@ -143,9 +144,8 @@ function deriveStatus(esp32Metrics) {
 
 
 async function appendToJsonl(filePath, data) {
-  const jsonLine = JSON.stringify(data) + '\n';
   try {
-    await fsp.appendFile(filePath, jsonLine);
+    await appendToJsonlSafe(filePath, data);
   } catch (error) {
     console.error("Failed to append to JSONL:", error.message);
     throw error;
