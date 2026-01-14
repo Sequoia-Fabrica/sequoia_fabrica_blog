@@ -2,6 +2,10 @@ name: Test build hugo site
 
 on: [push]
 
+concurrency:
+  group: deployment-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build Hugo Site

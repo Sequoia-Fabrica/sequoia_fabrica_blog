@@ -9,6 +9,10 @@ on:
   workflow_dispatch:
 # on: [push] # on all pushes for testing
 
+concurrency:
+  group: deployment-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -85,5 +89,15 @@ jobs:
             sudo systemctl restart data-orchestrator.service
             sudo systemctl restart weather-collector.service
             sudo systemctl restart calendar-collector.service
+
+            sleep 5
+            for service in esp-logger power-collector data-orchestrator weather-collector calendar-collector; do
+              if ! systemctl is-active --quiet $service.service; then
+                echo "ERROR: $service.service failed to start"
+                systemctl status $service.service
+                exit 1
+              fi
+            done
+            echo "All services started successfully"
 
 

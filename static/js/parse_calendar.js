@@ -1,5 +1,19 @@
 async function fetchAndParseICS(url) {
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let response;
+    try {
+        response = await fetch(url, { signal: controller.signal });
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            throw new Error(`Timeout fetching calendar from ${url} after 30 seconds`);
+        }
+        throw err;
+    }
+    clearTimeout(timeoutId);
+
     const text = await response.text();
 
     const events = [];
