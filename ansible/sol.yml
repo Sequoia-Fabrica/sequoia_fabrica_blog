@@ -710,6 +710,13 @@
         append: yes
       tags: [collectors]
 
+    - name: Add deploy user to monitoring group for rsync permissions
+      ansible.builtin.user:
+        name: "{{ deploy_user }}"
+        groups: monitoring
+        append: yes
+      tags: [collectors]
+
     - name: Create monitoring log directory
       ansible.builtin.file:
         path: "{{ collectors_log_dir }}"
@@ -743,7 +750,7 @@
         state: directory
         owner: monitoring
         group: monitoring
-        mode: "0755"
+        mode: "2775"  # setgid + group writable for rsync deployments
       tags: [collectors]
 
     - name: Install npm
@@ -758,7 +765,7 @@
         state: directory
         owner: monitoring
         group: monitoring
-        mode: "0755"
+        mode: "2775"  # setgid + group writable for rsync deployments
       loop:
         - collectors
         - static/js
