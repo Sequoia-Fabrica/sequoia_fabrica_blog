@@ -58,8 +58,21 @@ class Dashboard {
 
     const statsElement = document.getElementById("stats");
     if (statsElement) {
-      statsElement.innerHTML = this.createDefinitionList(dashboardStats);
+      this.renderDefinitionList(statsElement, dashboardStats);
     }
+  }
+
+  renderDefinitionList(container, pairs) {
+    container.innerHTML = ''; // Clear existing content
+    pairs.forEach(([term, definition]) => {
+      const dt = document.createElement('dt');
+      dt.textContent = term;
+      container.appendChild(dt);
+
+      const dd = document.createElement('dd');
+      dd.textContent = definition; // Safe: uses textContent, not innerHTML
+      container.appendChild(dd);
+    });
   }
 
   populateForecast(weather) {
@@ -117,12 +130,6 @@ class Dashboard {
         element.appendChild(textSpan);
       });
     });
-  }
-
-  createDefinitionList(pairs) {
-    return pairs
-      .map(([term, definition]) => `<dt>${term}</dt><dd>${definition}</dd>`)
-      .join("");
   }
 
   // Utility functions
