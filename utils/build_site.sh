@@ -48,25 +48,25 @@ echo ""
 now=`date`
 now_seconds=`date +%s`
 
-mkdir -p $outputDir
+mkdir -p "$outputDir"
 
-echo $updated
+echo "$updated"
 echo "Rebuilding the site"
 
-cd $repoDir
+cd "$repoDir"
 
 echo "Dithering new images"
 
-python3 utils/dither_images.py -d $contentDir --preserve-color
+python3 utils/dither_images.py -d "$contentDir" --preserve-color
 
 echo "Generating site"
-hugo --baseURL $baseURL --destination $outputDir --ignoreCache --environment production --minify
+hugo --baseURL "$baseURL" --destination "$outputDir" --ignoreCache --environment production --minify
 
 echo "Calculating page sizes"
-python3 utils/calculate_size.py --directory $outputDir --baseURL $baseURL
+python3 utils/calculate_size.py --directory "$outputDir" --baseURL "$baseURL"
 
-echo "Removing original media from" $outputDir
-python3 utils/clean_output.py --directory $outputDir
+echo "Removing original media from" "$outputDir"
+python3 utils/clean_output.py --directory "$outputDir"
 
 after_seconds=`date +%s`
 time_elapsed=$(( $after_seconds - $now_seconds ))
