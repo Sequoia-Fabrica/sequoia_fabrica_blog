@@ -11,6 +11,9 @@ class PowerMonitor {
   async loadData() {
     try {
       const response = await fetch(this.statsUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`Stats API request failed with HTTP ${response.status}`);
+      }
       const data = await response.json();
       return data;
     } catch (error) {
