@@ -3,8 +3,8 @@ name: Test build hugo site
 on: [push]
 
 concurrency:
-  group: deployment-${{ github.ref }}
-  cancel-in-progress: false
+  group: test-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:

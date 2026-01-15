@@ -3,8 +3,15 @@ async function fetchAndParseICS(url) {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     let response;
+    let text;
     try {
         response = await fetch(url, { signal: controller.signal });
+
+        if (!response.ok) {
+            throw new Error(`Calendar fetch failed with HTTP ${response.status}`);
+        }
+
+        text = await response.text();
     } catch (err) {
         clearTimeout(timeoutId);
         if (err.name === 'AbortError') {
@@ -13,8 +20,6 @@ async function fetchAndParseICS(url) {
         throw err;
     }
     clearTimeout(timeoutId);
-
-    const text = await response.text();
 
     const events = [];
     const lines = text.split(/\r?\n/);
