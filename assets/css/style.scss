@@ -1611,6 +1611,102 @@ Global Responsive Styles
 }
 
 /*---------------
+HERO SECTION
+----------------*/
+
+.hero-solar {
+    padding: var(--pad-xlarge) 0;
+    margin-bottom: var(--pad-large);
+    border-bottom: 2px solid var(--color-icons-lines);
+}
+
+.hero-content {
+    display: flex;
+    align-items: center;
+    gap: var(--pad-xlarge);
+    max-width: var(--max-content-width);
+}
+
+.hero-gauge {
+    flex-shrink: 0;
+    width: 150px;
+    height: 150px;
+    border: 3px solid var(--color-icons-lines);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg2);
+}
+
+.gauge-icon {
+    font-size: 1.5rem;
+}
+
+.gauge-value {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.gauge-label {
+    font-size: var(--font-small);
+    color: var(--color-sub);
+}
+
+.hero-headline {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: none;
+}
+
+.hero-subhead {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    max-width: 50ch;
+}
+
+.hero-ctas {
+    display: flex;
+    gap: var(--pad);
+    flex-wrap: wrap;
+}
+
+/* Button styles */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--color-primary);
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--color-bg);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--color-primary);
+}
+
+.btn:hover {
+    opacity: 0.8;
+}
+
+@include media(big-mobile) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-ctas {
+        justify-content: center;
+    }
+}
+
+/*---------------
 CARD COMPONENT
 ----------------*/
 
