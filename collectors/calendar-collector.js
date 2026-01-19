@@ -9,7 +9,7 @@ const fsp = require("fs/promises");
 const fetchAndParseICS = require("../static/js/parse_calendar.js");
 
 // ---------- CONFIG ----------
-const LOGS_DIR = "/var/log/monitoring";
+const LOGS_DIR = "/var/lib/monitoring";
 const CALENDAR_LOG_PATH = path.join(LOGS_DIR, "calendar_cache.jsonl");
 const ICS_URL = "http://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics";
 

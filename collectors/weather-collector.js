@@ -9,7 +9,7 @@ const fsp = require("fs/promises");
 const getWeather = require("../static/js/weather.js");
 
 // ---------- CONFIG ----------
-const LOGS_DIR = "/var/log/monitoring";
+const LOGS_DIR = "/var/lib/monitoring";
 const WEATHER_LOG_PATH = path.join(LOGS_DIR, "weather_cache.jsonl");
 
 // ---------- HELPERS ----------

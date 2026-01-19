@@ -15,7 +15,7 @@
 
     # Monitoring collectors
     collectors_app_dir: "/opt/sequoia_fabrica_blog"
-    collectors_log_dir: "/var/log/monitoring"
+    collectors_log_dir: "/var/lib/monitoring"
     collectors_api_dir: "/var/www/html/api"
 
     # Tailscale
@@ -717,18 +717,9 @@
         append: yes
       tags: [collectors]
 
-    - name: Create monitoring log directory
+    - name: Create monitoring data directory (persistent storage)
       ansible.builtin.file:
         path: "{{ collectors_log_dir }}"
-        state: directory
-        owner: monitoring
-        group: monitoring
-        mode: "0755"
-      tags: [collectors]
-
-    - name: Create ESP logger directory
-      ansible.builtin.file:
-        path: /var/log/esp_logger
         state: directory
         owner: monitoring
         group: monitoring
