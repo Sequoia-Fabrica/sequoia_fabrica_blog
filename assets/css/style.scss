@@ -1610,4 +1610,47 @@ Global Responsive Styles
     --fc-button-active-border-color: none;
 }
 
+/*---------------
+CARD COMPONENT
+----------------*/
+
+.card {
+    background: var(--color-bg);
+    border: 2px solid var(--color-icons-lines);
+    padding: var(--card-padding);
+    margin-bottom: var(--card-gap);
+}
+
+.card-header {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-size: var(--font-small);
+    color: var(--color-sub);
+}
+
+.card-value {
+    font-size: var(--font-xlarge);
+    margin-bottom: 0.25rem;
+}
+
+.card-label {
+    font-size: var(--font-small);
+    color: var(--color-sub);
+}
+
+/* Card grid for dashboard */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--card-gap);
+    margin: var(--pad-large) 0;
+}
+
+@include media(mobile) {
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @import "_print";
