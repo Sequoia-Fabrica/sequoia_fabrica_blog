@@ -9,7 +9,7 @@ BAUD_RATE = 115200
 MQTT_BROKER = "broker.hivemq.com"
 MQTT_PORT = 1883
 MQTT_TOPIC = "seqfab/sensors/sol"
-LOG_FILE = "/var/log/esp_logger/esp_log.jsonl"
+LOG_FILE = "/var/lib/monitoring/esp_log.jsonl"
 
 def send_time_sync(ser):
     now = int(time.time())

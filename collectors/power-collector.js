@@ -8,10 +8,9 @@ const path = require("path");
 const os = require("os");
 
 // ---------- CONFIG ----------
-const LOGS_DIR = "/var/log/monitoring";
+const LOGS_DIR = "/var/lib/monitoring";
 const POWER_LOG_PATH = path.join(LOGS_DIR, "power_metrics.jsonl");
-const ESP32_LOG_PATH = '/var/log/esp_logger/esp_log.jsonl'
-// TODO: update to use path.join(LOGS_DIR, "esp_log.jsonl"); (@orban)
+const ESP32_LOG_PATH = path.join(LOGS_DIR, "esp_log.jsonl");
 
 // System sensor paths
 const CPU_TEMP_PATH = "/sys/class/thermal/thermal_zone0/temp";
