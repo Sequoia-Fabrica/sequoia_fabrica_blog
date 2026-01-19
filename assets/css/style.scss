@@ -1958,4 +1958,39 @@ PRICING CARDS
     color: var(--color-sub);
 }
 
+/*---------------
+COLLAPSIBLE SECTIONS
+----------------*/
+
+.collapsible {
+    margin: var(--pad-large) 0;
+    border: 1px solid var(--color-bg2);
+}
+
+.collapsible-title {
+    padding: var(--pad);
+    cursor: pointer;
+    font-weight: bold;
+    background: var(--color-bg2);
+    list-style: none;
+}
+
+.collapsible-title::-webkit-details-marker {
+    display: none;
+}
+
+.collapsible-title::before {
+    content: "▶ ";
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.collapsible[open] .collapsible-title::before {
+    transform: rotate(90deg);
+}
+
+.collapsible-content {
+    padding: var(--pad-large);
+}
+
 @import "_print";
