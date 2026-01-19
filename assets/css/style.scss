@@ -61,6 +61,17 @@
     --max-img-width: 1040px;
     --max-content-width: 60rem;
     --content-width: 90%;
+
+    /* New spacing variables */
+    --max-text-width: 65ch;
+    --section-gap: 3rem;
+    --card-padding: 1.5rem;
+    --card-gap: 1rem;
+
+    /* Status bar */
+    --status-bar-height: 2.5rem;
+    --status-bar-bg: var(--color-bg2);
+
     @include media(tablet) {
         --content-width: 70%;
     }
