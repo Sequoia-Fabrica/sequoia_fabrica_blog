@@ -1707,6 +1707,39 @@ HERO SECTION
 }
 
 /*---------------
+STATUS BAR
+----------------*/
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--pad);
+    padding: var(--pad-small) var(--pad);
+    background: var(--status-bar-bg);
+    font-size: var(--font-small);
+    flex-wrap: wrap;
+}
+
+.status-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.status-separator {
+    color: var(--color-icons-lines);
+}
+
+.status-label {
+    color: var(--color-sub);
+}
+
+.status-value {
+    font-weight: bold;
+}
+
+/*---------------
 CARD COMPONENT
 ----------------*/
 
