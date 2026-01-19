@@ -1993,4 +1993,74 @@ COLLAPSIBLE SECTIONS
     padding: var(--pad-large);
 }
 
+/*---------------
+FOOTER REDESIGN
+----------------*/
+
+.site-footer {
+    border-top: 2px solid var(--color-icons-lines);
+    margin-top: var(--pad-section);
+}
+
+.footer-content {
+    padding: var(--pad-large) 0;
+    max-width: var(--max-content-width);
+    margin: 0 auto;
+}
+
+.footer-brand h2 {
+    text-align: center;
+    margin-bottom: var(--pad-large);
+    border-bottom: none;
+}
+
+.footer-nav {
+    text-align: center;
+    margin-bottom: var(--pad-large);
+}
+
+.footer-nav a {
+    border-bottom: none;
+}
+
+.nav-sep {
+    margin: 0 var(--pad-small);
+    color: var(--color-icons-lines);
+}
+
+.footer-columns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--pad-xlarge);
+    margin-bottom: var(--pad-large);
+}
+
+.footer-column h3 {
+    font-size: var(--font-body);
+    margin-bottom: var(--pad-small);
+    border-bottom: none;
+}
+
+.social-links a {
+    margin-right: var(--pad);
+}
+
+.footer-bottom {
+    text-align: center;
+    font-size: var(--font-small);
+    color: var(--color-sub);
+    padding-top: var(--pad);
+    border-top: 1px solid var(--color-bg2);
+}
+
+.footer-sep {
+    margin: 0 var(--pad-small);
+}
+
+@include media(mobile) {
+    .footer-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
 @import "_print";
