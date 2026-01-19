@@ -163,8 +163,9 @@ async function collectPowerMetrics() {
     const esp32Metrics = await getLatestESP32Metrics();
 
     if (!esp32Metrics) {
-      console.error("No ESP32 metrics available");
-      return null;
+      // No ESP data yet - this is expected on first run while ESP logger accumulates data
+      console.warn("No ESP32 metrics available yet - ESP logger may still be starting up");
+      return { noDataYet: true };
     }
 
     // Calculate power metrics from shunt data
@@ -225,12 +226,17 @@ async function main() {
 
     // Collect metrics
     const metrics = await collectPowerMetrics();
-    if (metrics) {
-      await appendToJsonl(POWER_LOG_PATH, metrics);
-      console.log(`Power metrics logged: ${metrics.ts}`);
-    } else {
+    if (!metrics) {
+      // Actual error occurred (caught in collectPowerMetrics)
       console.error("Failed to collect metrics");
       process.exitCode = 1;
+    } else if (metrics.noDataYet) {
+      // No ESP data available yet - this is expected on first run
+      // Exit gracefully with code 0 (success)
+      console.log("Skipping metrics collection - ESP data not yet available");
+    } else {
+      await appendToJsonl(POWER_LOG_PATH, metrics);
+      console.log(`Power metrics logged: ${metrics.ts}`);
     }
 
   } catch (error) {
