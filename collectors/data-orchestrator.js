@@ -90,21 +90,40 @@ const fmt = (n, digits = 2) => {
 
 // Read recent power metrics from JSONL file for sparkline generation
 async function getSparklineDataFromPowerLog() {
+  const meta = {
+    file_size_bytes: 0,
+    total_lines: 0,
+    parsed_entries: 0,
+    entries_in_window: 0,
+    bucket_count: 0,
+    oldest_entry_ms: null,
+    newest_entry_ms: null,
+    window_start_ms: 0,
+    window_end_ms: 0,
+    error: null
+  };
+
   try {
     if (!(await fileExists(powerCollector.POWER_LOG_PATH))) {
-      return createEmptySparklineData();
+      meta.error = "File not found";
+      return { ...createEmptySparklineData(), meta };
     }
 
     const now = Date.now();
     const cutoffTime = now - SPARKLINE_WINDOW_MS;
+    meta.window_start_ms = cutoffTime;
+    meta.window_end_ms = now;
 
     // Read recent data from JSONL file
     const stat = await fsp.stat(powerCollector.POWER_LOG_PATH);
+    meta.file_size_bytes = stat.size;
+
     const readSize = Math.min(stat.size, 2 * 1024 * 1024); // Read last 2MB max
     const start = Math.max(0, stat.size - readSize);
 
     const fd = await fsp.open(powerCollector.POWER_LOG_PATH, "r");
     let buffer;
+    let bytesRead = 0;
     try {
       const result = await fd.read({
         position: start,
@@ -112,20 +131,46 @@ async function getSparklineDataFromPowerLog() {
         buffer: Buffer.alloc(readSize),
       });
       buffer = result.buffer;
+      bytesRead = result.bytesRead;
     } finally {
       await fd.close();
     }
 
-    const lines = buffer.toString("utf8").trim().split("\n").filter(Boolean);
+    // If we started reading mid-file, skip the first partial line
+    let content = buffer.slice(0, bytesRead).toString("utf8");
+    if (start > 0) {
+      const firstNewline = content.indexOf("\n");
+      if (firstNewline !== -1) {
+        content = content.slice(firstNewline + 1);
+      }
+    }
+
+    const lines = content.trim().split("\n").filter(Boolean);
+    meta.total_lines = lines.length;
+
     const buckets = new Map();
 
     // Process JSONL lines into time buckets
     for (const line of lines) {
       try {
         const entry = JSON.parse(line);
+        meta.parsed_entries++;
+
         const timestamp = entry.ms || Date.parse(entry.ts);
 
-        if (!timestamp || timestamp < cutoffTime) continue;
+        if (!timestamp) continue;
+
+        // Track timestamp range in file
+        if (meta.oldest_entry_ms === null || timestamp < meta.oldest_entry_ms) {
+          meta.oldest_entry_ms = timestamp;
+        }
+        if (meta.newest_entry_ms === null || timestamp > meta.newest_entry_ms) {
+          meta.newest_entry_ms = timestamp;
+        }
+
+        if (timestamp < cutoffTime) continue;
+
+        meta.entries_in_window++;
 
         const bucketTime =
           Math.floor(timestamp / SPARKLINE_BUCKET_MS) * SPARKLINE_BUCKET_MS;
@@ -156,6 +201,8 @@ async function getSparklineDataFromPowerLog() {
       }
     }
 
+    meta.bucket_count = buckets.size;
+
     // Convert to sparkline format
     const sortedBuckets = Array.from(buckets.entries()).sort(
       (a, b) => a[0] - b[0]
@@ -180,11 +227,13 @@ async function getSparklineDataFromPowerLog() {
       ),
       cpuLoad: sortedBuckets.map(([, bucket]) =>
         bucket.count > 0 ? bucket.sums.cpu_load / bucket.count : 0
-      )
+      ),
+      meta
     };
   } catch (error) {
     console.warn("Failed to analyze power log for sparklines:", error.message);
-    return createEmptySparklineData();
+    meta.error = error.message;
+    return { ...createEmptySparklineData(), meta };
   }
 }
 
@@ -264,7 +313,17 @@ async function generateStatsJson() {
     const socPct = Math.round((powerMetrics.soc || 0) * 100);
 
     // Get sparkline data
-    const sparklines = await getSparklineDataFromPowerLog();
+    const sparklineResult = await getSparklineDataFromPowerLog();
+    const { meta: sparklineMeta, ...sparklines } = sparklineResult;
+
+    // Log sparkline stats for debugging
+    if (sparklineMeta) {
+      console.log(`Sparkline stats: ${sparklineMeta.bucket_count} buckets from ${sparklineMeta.entries_in_window}/${sparklineMeta.parsed_entries} entries (${sparklineMeta.file_size_bytes} bytes)`);
+      if (sparklineMeta.oldest_entry_ms && sparklineMeta.newest_entry_ms) {
+        const ageHours = (Date.now() - sparklineMeta.oldest_entry_ms) / (1000 * 60 * 60);
+        console.log(`  Data range: ${ageHours.toFixed(1)} hours old to now`);
+      }
+    }
 
     // Create comprehensive stats object
     const stats = {
@@ -290,6 +349,9 @@ async function generateStatsJson() {
 
       // Sparkline data
       sparklines: sparklines,
+
+      // Sparkline metadata for debugging
+      sparkline_meta: sparklineMeta,
 
       // Formatted values for templates
       fmt: {
