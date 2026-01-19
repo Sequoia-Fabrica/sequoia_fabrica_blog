@@ -893,6 +893,20 @@ figure,
     }
 }
 
+/* Constrain prose text for optimal readability */
+.entry-content p,
+.entry-content li,
+.article-body p,
+.article-body li {
+    max-width: var(--max-text-width);
+}
+
+/* Ensure images can still be full width */
+.entry-content img,
+.entry-content figure {
+    max-width: 100%;
+}
+
 /*---------------
 FIGURES AND IMAGES
 ----------------*/
