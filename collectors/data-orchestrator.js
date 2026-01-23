@@ -18,9 +18,33 @@ const STATS_FILE = path.join(API_DIR, "stats.json");
 const WEATHER_FILE = path.join(API_DIR, "weather.json");
 const CALENDAR_FILE = path.join(API_DIR, "calendar.json");
 
-// Sparkline configuration for 24-hour window
-const SPARKLINE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-const SPARKLINE_BUCKET_MS = 5 * 60 * 1000; // 5-minute buckets (288 buckets per day)
+// Time range configurations for sparklines
+const TIME_RANGES = {
+  '8h': {
+    window_ms: 8 * 60 * 60 * 1000,       // 8 hours
+    bucket_ms: 5 * 60 * 1000,             // 5-minute buckets (96 points)
+    filename: 'stats-8h.json'
+  },
+  '24h': {
+    window_ms: 24 * 60 * 60 * 1000,      // 24 hours
+    bucket_ms: 5 * 60 * 1000,             // 5-minute buckets (288 points)
+    filename: 'stats.json'                // Default file for backwards compatibility
+  },
+  '7d': {
+    window_ms: 7 * 24 * 60 * 60 * 1000,  // 7 days
+    bucket_ms: 15 * 60 * 1000,            // 15-minute buckets (672 points)
+    filename: 'stats-7d.json'
+  },
+  '30d': {
+    window_ms: 30 * 24 * 60 * 60 * 1000, // 30 days
+    bucket_ms: 60 * 60 * 1000,            // 1-hour buckets (720 points)
+    filename: 'stats-30d.json'
+  }
+};
+
+// Default values for backwards compatibility
+const SPARKLINE_WINDOW_MS = TIME_RANGES['24h'].window_ms;
+const SPARKLINE_BUCKET_MS = TIME_RANGES['24h'].bucket_ms;
 
 // ---------- HELPERS ----------
 const fileExists = async (p) => {
@@ -89,7 +113,8 @@ const fmt = (n, digits = 2) => {
 // ---------- POWER DATA PROCESSING ----------
 
 // Read recent power metrics from JSONL file for sparkline generation
-async function getSparklineDataFromPowerLog() {
+// Parameters allow different time windows and bucket sizes for various time ranges
+async function getSparklineDataFromPowerLog(windowMs = SPARKLINE_WINDOW_MS, bucketMs = SPARKLINE_BUCKET_MS) {
   const meta = {
     file_size_bytes: 0,
     total_lines: 0,
@@ -100,6 +125,8 @@ async function getSparklineDataFromPowerLog() {
     newest_entry_ms: null,
     window_start_ms: 0,
     window_end_ms: 0,
+    window_ms: windowMs,
+    bucket_ms: bucketMs,
     error: null
   };
 
@@ -110,7 +137,7 @@ async function getSparklineDataFromPowerLog() {
     }
 
     const now = Date.now();
-    const cutoffTime = now - SPARKLINE_WINDOW_MS;
+    const cutoffTime = now - windowMs;
     meta.window_start_ms = cutoffTime;
     meta.window_end_ms = now;
 
@@ -118,7 +145,10 @@ async function getSparklineDataFromPowerLog() {
     const stat = await fsp.stat(powerCollector.POWER_LOG_PATH);
     meta.file_size_bytes = stat.size;
 
-    const readSize = Math.min(stat.size, 2 * 1024 * 1024); // Read last 2MB max
+    // Scale read size based on window - larger windows need more data
+    const baseReadSize = 2 * 1024 * 1024; // 2MB for 24h
+    const windowDays = windowMs / (24 * 60 * 60 * 1000);
+    const readSize = Math.min(stat.size, Math.ceil(baseReadSize * Math.max(1, windowDays)));
     const start = Math.max(0, stat.size - readSize);
 
     const fd = await fsp.open(powerCollector.POWER_LOG_PATH, "r");
@@ -173,7 +203,7 @@ async function getSparklineDataFromPowerLog() {
         meta.entries_in_window++;
 
         const bucketTime =
-          Math.floor(timestamp / SPARKLINE_BUCKET_MS) * SPARKLINE_BUCKET_MS;
+          Math.floor(timestamp / bucketMs) * bucketMs;
 
         if (!buckets.has(bucketTime)) {
           buckets.set(bucketTime, {
@@ -291,9 +321,11 @@ function formatUptime(seconds) {
 
 // ---------- DATA AGGREGATION ----------
 
-async function generateStatsJson() {
+async function generateStatsJson(timeRangeKey = '24h') {
+  const timeRange = TIME_RANGES[timeRangeKey] || TIME_RANGES['24h'];
+
   try {
-    console.log("Generating stats.json...");
+    console.log(`Generating ${timeRange.filename} (${timeRangeKey})...`);
 
     // Get latest power metrics
     const powerMetrics = await getLatestPowerMetrics();
@@ -302,6 +334,7 @@ async function generateStatsJson() {
       console.warn("No power metrics available");
       return {
         local_time: new Date().toLocaleString(),
+        time_range: timeRangeKey,
         error: "No power data available",
         uptime: "—"
       };
@@ -312,13 +345,16 @@ async function generateStatsJson() {
     const esp32V = powerMetrics.esp32_v_V || 0;
     const socPct = Math.round((powerMetrics.soc || 0) * 100);
 
-    // Get sparkline data
-    const sparklineResult = await getSparklineDataFromPowerLog();
+    // Get sparkline data for the specified time range
+    const sparklineResult = await getSparklineDataFromPowerLog(
+      timeRange.window_ms,
+      timeRange.bucket_ms
+    );
     const { meta: sparklineMeta, ...sparklines } = sparklineResult;
 
     // Log sparkline stats for debugging
     if (sparklineMeta) {
-      console.log(`Sparkline stats: ${sparklineMeta.bucket_count} buckets from ${sparklineMeta.entries_in_window}/${sparklineMeta.parsed_entries} entries (${sparklineMeta.file_size_bytes} bytes)`);
+      console.log(`  Sparkline stats: ${sparklineMeta.bucket_count} buckets from ${sparklineMeta.entries_in_window}/${sparklineMeta.parsed_entries} entries`);
       if (sparklineMeta.oldest_entry_ms && sparklineMeta.newest_entry_ms) {
         const ageHours = (Date.now() - sparklineMeta.oldest_entry_ms) / (1000 * 60 * 60);
         console.log(`  Data range: ${ageHours.toFixed(1)} hours old to now`);
@@ -329,6 +365,7 @@ async function generateStatsJson() {
     const stats = {
       // Meta information
       local_time: new Date().toLocaleString(),
+      time_range: timeRangeKey,
       gen_ms: Date.now() - Date.parse(powerMetrics.ts),
       uptime: formatUptime(powerMetrics.uptime || 0),
 
@@ -367,9 +404,10 @@ async function generateStatsJson() {
     return stats;
 
   } catch (error) {
-    console.error("Failed to generate stats:", error.message);
+    console.error(`Failed to generate stats for ${timeRangeKey}:`, error.message);
     return {
       local_time: new Date().toLocaleString(),
+      time_range: timeRangeKey,
       error: error.message,
       uptime: "—"
     };
@@ -463,22 +501,34 @@ async function main() {
   try {
     console.log("Data orchestrator starting...");
 
+    // Generate stats for all time ranges in parallel
+    const timeRangeKeys = Object.keys(TIME_RANGES);
+    const statsPromises = timeRangeKeys.map(key => generateStatsJson(key));
+
     // Generate all data files in parallel
-    const [statsData, weatherData, calendarData] = await Promise.all([
-      generateStatsJson(),
+    const [statsDataArray, weatherData, calendarData] = await Promise.all([
+      Promise.all(statsPromises),
       generateWeatherJson(),
       generateCalendarJson()
     ]);
 
-    // Write JSON files atomically
+    // Write all stats files for different time ranges
+    const statsWritePromises = timeRangeKeys.map((key, index) => {
+      const filePath = path.join(API_DIR, TIME_RANGES[key].filename);
+      return writeFileAtomic(filePath, JSON.stringify(statsDataArray[index]));
+    });
+
+    // Write all JSON files atomically
     await Promise.all([
-      writeFileAtomic(STATS_FILE, JSON.stringify(statsData)),
+      ...statsWritePromises,
       writeFileAtomic(WEATHER_FILE, JSON.stringify(weatherData)),
       writeFileAtomic(CALENDAR_FILE, JSON.stringify(calendarData))
     ]);
 
     console.log(`Data files updated:`);
-    console.log(`  - ${STATS_FILE}`);
+    for (const key of timeRangeKeys) {
+      console.log(`  - ${path.join(API_DIR, TIME_RANGES[key].filename)}`);
+    }
     console.log(`  - ${WEATHER_FILE}`);
     console.log(`  - ${CALENDAR_FILE}`);
 
@@ -497,5 +547,6 @@ module.exports = {
   generateStatsJson,
   generateWeatherJson,
   generateCalendarJson,
+  TIME_RANGES,
   main
 };

@@ -2,10 +2,79 @@
 // Power monitoring component with detailed metrics and sparklines
 
 class PowerMonitor {
+  // Time range configurations matching data-orchestrator.js
+  static TIME_RANGES = {
+    '8h': { label: '8hr', filename: 'stats-8h.json' },
+    '24h': { label: '24hr', filename: 'stats.json' },
+    '7d': { label: '7 days', filename: 'stats-7d.json' },
+    '30d': { label: '30 days', filename: 'stats-30d.json' }
+  };
+
   constructor() {
+    this.currentTimeRange = '24h'; // Default time range
     this.statsUrl = "/api/stats.json";
     this.refreshInterval = null;
     this.refreshRate = 10000; // 10 seconds
+  }
+
+  getStatsUrl(timeRange = this.currentTimeRange) {
+    const range = PowerMonitor.TIME_RANGES[timeRange];
+    return range ? `/api/${range.filename}` : '/api/stats.json';
+  }
+
+  setTimeRange(timeRange) {
+    if (PowerMonitor.TIME_RANGES[timeRange]) {
+      this.currentTimeRange = timeRange;
+      this.statsUrl = this.getStatsUrl(timeRange);
+      this.updateTimeRangeUI();
+      this.refresh();
+    }
+  }
+
+  updateTimeRangeUI() {
+    const selector = document.getElementById('time-range-selector');
+    if (!selector) return;
+
+    const links = selector.querySelectorAll('a[data-range]');
+    links.forEach(link => {
+      const range = link.getAttribute('data-range');
+      if (range === this.currentTimeRange) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
+  renderTimeRangeSelector() {
+    const serverElement = document.getElementById('server');
+    if (!serverElement) return;
+
+    // Check if selector already exists
+    if (document.getElementById('time-range-selector')) return;
+
+    const selector = document.createElement('div');
+    selector.id = 'time-range-selector';
+    selector.className = 'time-range-selector';
+
+    const links = Object.entries(PowerMonitor.TIME_RANGES).map(([key, config]) => {
+      const activeClass = key === this.currentTimeRange ? ' active' : '';
+      return `<a href="#" data-range="${key}" class="time-range-link${activeClass}">${config.label}</a>`;
+    });
+
+    selector.innerHTML = links.join(' ');
+
+    // Insert before the server stats
+    serverElement.parentNode.insertBefore(selector, serverElement);
+
+    // Add click handlers
+    selector.querySelectorAll('a[data-range]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const range = link.getAttribute('data-range');
+        this.setTimeRange(range);
+      });
+    });
   }
 
   async loadData() {
@@ -276,6 +345,8 @@ class PowerMonitor {
     try {
       await this.refresh();
       if (window.location.pathname.includes("/power/")) {
+        // Render time range selector on power page
+        this.renderTimeRangeSelector();
         this.startAutoRefresh();
         window.addEventListener("beforeunload", () => {
           this.stopAutoRefresh();
