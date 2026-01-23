@@ -2,6 +2,80 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Intent Layer
+
+> **TL;DR**: Solar-powered Hugo blog for Sequoia Fabrica Makerspace with live power monitoring from ESP32. See Entry Points for common tasks.
+
+### Entry Points
+
+| Task | Start Here |
+|------|------------|
+| Add/edit blog post | `content/posts/[slug]/index.md` |
+| Modify site layout | `layouts/` partials and templates |
+| Update power monitoring | `collectors/power-collector.js` |
+| Change site config | `hugo.toml` |
+| Modify deployment | `.github/workflows/deploy-site.yml` |
+| Update server config | `ansible/sol.yml` |
+| Debug ESP32 data | `static/py/esp_logger.py` |
+
+### Boundaries
+
+#### Always
+- Create PRs instead of pushing directly to main
+- Run `make serve` to test Hugo changes locally before committing
+- Test collector changes with `node collectors/<name>.js` locally first
+- Keep monitoring data in `/var/log/monitoring/` (persistent storage)
+
+#### Ask First
+- Database schema changes to metrics JSONL format
+- Changes to API response shapes in `/api/*.json`
+- Modifying systemd service configurations
+- Adding new external dependencies to collectors
+
+#### Never
+- Commit secrets, API keys, or `.env` files
+- Push directly to main branch
+- Use `rsync -a` for deployment (breaks permissions—use `--no-group --no-owner`)
+- Modify ESP32 serial baud rate without updating both firmware and logger
+
+### Pitfalls
+
+- **Race condition on first run**: `power-collector.js` reads from `esp_log.jsonl` which may not exist on first run. The collector now handles this gracefully, but test with missing files.
+- **Power metrics data loss**: Sparklines require 5-minute resolution data for 24 hours. If `data-orchestrator.js` runs before `power-collector.js` populates data, sparklines will be empty.
+- **Rsync permissions**: Using `rsync -a` preserves source permissions which fail on the server. Always use `--no-group --no-owner` flags.
+- **Ansible check mode**: Service file updates with `notify` handlers fail in check mode. Use `--check` carefully with systemd tasks.
+- **Hugo deprecations**: Use `pagination.pagerSize` not `paginate`. Use `css.Sass` not `resources.ToCSS`.
+- **Service paths**: ESP logger expects scripts at `/opt/sequoia_fabrica_blog/`, not relative paths.
+- **Current normalization**: Power monitor displays use normalized current values—raw INA228 readings need conversion.
+
+### Pre-flight Checks
+
+#### Deploying Collectors
+Before deploying collector changes:
+- [ ] `node collectors/<name>.js` runs without errors locally
+- [ ] JSON output format matches existing `/api/*.json` schema
+- [ ] No hardcoded paths that differ between local and server
+
+If any unchecked → fix first before pushing.
+
+#### Modifying Ansible
+Before changing `ansible/**`:
+- [ ] Run `ansible-playbook --check ansible/sol.yml` passes
+- [ ] No secrets in playbook (use GitHub secrets)
+- [ ] Service file changes have proper handlers
+
+If any unchecked → fix first before pushing.
+
+### Contracts
+
+- All collectors write JSONL to `/var/log/monitoring/`
+- All API endpoints served from `/var/www/html/api/`
+- ESP32 communicates at 115200 baud via `/dev/ttyUSB0`
+- Timers: power-collector (5min), weather/calendar (1hr), orchestrator (2min)
+- Deploy user `sol` runs rsync; service user `monitoring` runs collectors
+
+---
+
 ## Development Commands
 
 This is a Hugo static site for the Sequoia Fabrica Makerspace blog. Use these commands for development:
