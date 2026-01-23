@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Change site config | `hugo.toml` |
 | Modify deployment | `.github/workflows/deploy-site.yml` |
 | Update server config | `ansible/sol.yml` |
-| Debug ESP32 data | `utils/esp-exporter/esp_logger.py` |
+| Debug ESP32 data | `static/py/esp_logger.py` |
 
 ### Boundaries
 
