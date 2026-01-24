@@ -14,7 +14,14 @@ class Dashboard {
         fetch(this.statsUrl, { cache: "no-store" }),
         fetch(this.weatherUrl, { cache: "no-store" })
       ]);
-      
+
+      if (!statsResponse.ok) {
+        throw new Error(`Stats API request failed with HTTP ${statsResponse.status}`);
+      }
+      if (!weatherResponse.ok) {
+        throw new Error(`Weather API request failed with HTTP ${weatherResponse.status}`);
+      }
+
       const stats = await statsResponse.json();
       const weather = await weatherResponse.json();
       
