@@ -7,6 +7,7 @@ const fsp = require("fs/promises");
 
 // Import calendar module
 const fetchAndParseICS = require("../static/js/parse_calendar.js");
+const { appendToJsonlSafe } = require("./jsonl-utils.js");
 
 // ---------- CONFIG ----------
 const LOGS_DIR = "/var/lib/monitoring";
@@ -27,9 +28,8 @@ async function ensureDirectoryExists(dirPath) {
 
 
 async function appendToJsonl(filePath, data) {
-  const jsonLine = JSON.stringify(data) + '\n';
   try {
-    await fsp.appendFile(filePath, jsonLine);
+    await appendToJsonlSafe(filePath, data);
   } catch (error) {
     console.error("Failed to append to calendar JSONL:", error.message);
     throw error;

@@ -112,16 +112,27 @@ class PowerMonitor {
         }" r="2" fill="currentColor" opacity="0.6"/>
       </svg>`;
     }
-    const min = Math.min(...data);
-    const max = Math.max(...data);
+
+    // Validate that all data points are numeric
+    const validatedData = data.filter(d => Number.isFinite(d));
+    if (validatedData.length < 2) {
+      // Return loading state if data is invalid
+      return this.createSparklineSVG([], width, height);
+    }
+
+    const min = Math.min(...validatedData);
+    const max = Math.max(...validatedData);
     const range = max - min || 1;
-    const xStep = width / (data.length - 1);
-    let pathData = `M 0,${height - ((data[0] - min) / range) * height}`;
-    for (let i = 1; i < data.length; i++) {
+    const xStep = width / (validatedData.length - 1);
+
+    // Build path using validated numeric data
+    let pathData = `M 0,${height - ((validatedData[0] - min) / range) * height}`;
+    for (let i = 1; i < validatedData.length; i++) {
       const x = i * xStep;
-      const y = height - ((data[i] - min) / range) * height;
+      const y = height - ((validatedData[i] - min) / range) * height;
       pathData += ` L ${x},${y}`;
     }
+
     return `<svg width="${width}" height="${height}" class="sparkline" viewBox="0 0 ${width} ${height}">
       <path d="${pathData}" stroke="currentColor" fill="none" stroke-width="1"/>
     </svg>`;
@@ -216,64 +227,119 @@ class PowerMonitor {
 
     const sparklines = data.sparklines || {};
 
+    // Build stats with explicit content types for safe rendering
+    // { text: string } for API values, { html: string } for trusted internal SVGs
     const stats = [
-      ["Local time", data.local_time || "—"],
-      ["Uptime", data.uptime || "—"],
+      ["Local time", { text: data.local_time || "—" }],
+      ["Uptime", { text: data.uptime || "—" }],
       [
         "Power usage",
-        this.formatUnit(loadW, "W") +
-          this.createSparklineSVG(sparklines.powerUsage),
+        { text: this.formatUnit(loadW, "W"), svg: this.createSparklineSVG(sparklines.powerUsage) }
       ],
       [
         "Current draw",
-        (Number.isFinite(i_mA) ? this.formatCurrent(i_mA) : "—") +
-          (Number.isFinite(i_mA)
-            ? this.createSparklineSVG(sparklines.currentDraw)
-            : ""),
+        {
+          text: Number.isFinite(i_mA) ? this.formatCurrent(i_mA) : "—",
+          svg: Number.isFinite(i_mA) ? this.createSparklineSVG(sparklines.currentDraw) : null
+        }
       ],
       [
         "Voltage",
-        (this.isPresent(batteryV) ? this.formatUnit(batteryV, "V") : "—") +
-          (this.isPresent(batteryV)
-            ? this.createSparklineSVG(sparklines.voltage)
-            : ""),
+        {
+          text: this.isPresent(batteryV) ? this.formatUnit(batteryV, "V") : "—",
+          svg: this.isPresent(batteryV) ? this.createSparklineSVG(sparklines.voltage) : null
+        }
       ],
       [
         "CPU temperature",
-        (this.isPresent(data.fmt?.cpu?.temp) ? `${data.fmt.cpu.temp}` : "—") +
-          (this.isPresent(cpuTemp)
-            ? this.createSparklineSVG(sparklines.cpuTemp)
-            : ""),
+        {
+          text: this.isPresent(data.fmt?.cpu?.temp) ? String(data.fmt.cpu.temp) : "—",
+          svg: this.isPresent(cpuTemp) ? this.createSparklineSVG(sparklines.cpuTemp) : null
+        }
       ],
       [
         "CPU load average *",
-        (this.isPresent(data.fmt?.cpu?.load_15min)
-          ? `${data.fmt.cpu.load_15min}%`
-          : "—") +
-          (this.isPresent(cpuLoad)
-            ? this.createSparklineSVG(sparklines.cpuLoad)
-            : ""),
+        {
+          text: this.isPresent(data.fmt?.cpu?.load_15min) ? `${data.fmt.cpu.load_15min}%` : "—",
+          svg: this.isPresent(cpuLoad) ? this.createSparklineSVG(sparklines.cpuLoad) : null
+        }
       ],
-      ["Status", this.styleStatus(data.fmt?.status || "—")],
+      ["Status", this.createStatusElement(data.fmt?.status || "—")],
       [
         "Battery SOC",
-        (this.isPresent(data.fmt?.soc)
-          ? this.stylePercentage(data.fmt.soc)
-          : "—") +
-          (socPct ? this.createSparklineSVG(sparklines.mainBattery) : ""),
+        {
+          node: this.createPercentageElement(this.isPresent(data.fmt?.soc) ? data.fmt.soc : "—"),
+          svg: socPct ? this.createSparklineSVG(sparklines.mainBattery) : null
+        }
       ]
     ];
 
     const serverElement = document.getElementById("server");
     if (serverElement) {
-      serverElement.innerHTML = this.createDefinitionList(stats);
+      this.renderDefinitionList(serverElement, stats);
     }
   }
 
-  createDefinitionList(pairs) {
-    return pairs
-      .map(([term, definition]) => `<dt>${term}</dt><dd>${definition}</dd>`)
-      .join("");
+  renderDefinitionList(container, pairs) {
+    container.innerHTML = ''; // Clear existing content
+    pairs.forEach(([term, content]) => {
+      const dt = document.createElement('dt');
+      dt.textContent = term;
+      container.appendChild(dt);
+
+      const dd = document.createElement('dd');
+
+      if (content.node) {
+        // Pre-built DOM node
+        dd.appendChild(content.node);
+        if (content.svg) {
+          const svgContainer = document.createElement('span');
+          svgContainer.innerHTML = content.svg; // Trusted internal SVG
+          dd.appendChild(svgContainer);
+        }
+      } else if (content.text !== undefined) {
+        // Text value (escaped via textContent)
+        const textSpan = document.createElement('span');
+        textSpan.textContent = content.text;
+        dd.appendChild(textSpan);
+        if (content.svg) {
+          const svgContainer = document.createElement('span');
+          svgContainer.innerHTML = content.svg; // Trusted internal SVG
+          dd.appendChild(svgContainer);
+        }
+      } else if (content instanceof Node) {
+        // Direct DOM node
+        dd.appendChild(content);
+      } else {
+        // Fallback: treat as text
+        dd.textContent = String(content);
+      }
+
+      container.appendChild(dd);
+    });
+  }
+
+  createStatusElement(status) {
+    const span = document.createElement('span');
+    if (status === "Full" || status === "Charging") {
+      span.className = 'status-full';
+    }
+    span.textContent = status;
+    return { node: span };
+  }
+
+  createPercentageElement(percentage) {
+    const span = document.createElement('span');
+    span.textContent = percentage;
+    if (percentage && String(percentage).includes("%")) {
+      const value = parseInt(percentage, 10);
+      if (value >= 80) {
+        span.className = 'status-good';
+      } else if (value >= 50) {
+        span.className = 'status-percentage';
+      }
+    }
+    return span;
   }
 
   // Utility functions
@@ -293,25 +359,6 @@ class PowerMonitor {
 
   formatUnit(value, unit, decimals = 2) {
     return Number.isFinite(value) ? `${value.toFixed(decimals)}${unit}` : "—";
-  }
-
-  styleStatus(status) {
-    if (status === "Full" || status === "Charging") {
-      return `<span class="status-full">${status}</span>`;
-    }
-    return status;
-  }
-
-  stylePercentage(percentage) {
-    if (percentage && percentage.includes("%")) {
-      const value = parseInt(percentage, 10);
-      if (value >= 80) {
-        return `<span class="status-good">${percentage}</span>`;
-      } else if (value >= 50) {
-        return `<span class="status-percentage">${percentage}</span>`;
-      }
-    }
-    return percentage;
   }
 
   // Auto-refresh functionality
