@@ -1,0 +1,9 @@
+{{/*
+  Callout box shortcode
+  Usage: {{< callout type="info" >}}Content here{{< /callout >}}
+  Types: info, warning, note
+*/}}
+{{ $type := .Get "type" | default "info" }}
+<div class="callout callout-{{ $type }}">
+  {{ .Inner | markdownify }}
+</div>

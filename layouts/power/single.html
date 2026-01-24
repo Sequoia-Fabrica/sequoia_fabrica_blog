@@ -1,0 +1,63 @@
+{{ define "main" }}
+<main class="power-dashboard">
+  <h1>{{ .Title }}</h1>
+
+  <section class="dashboard-hero">
+    <div class="card-grid">
+      {{ partial "dashboard-card" (dict "id" "battery" "title" "Battery Status" "icon" "🔋" "sparkline" false) }}
+      {{ partial "dashboard-card" (dict "id" "power" "title" "Power Draw" "icon" "⚡" "sparkline" true) }}
+      {{ partial "dashboard-card" (dict "id" "weather" "title" "Weather" "icon" "☀️" "sparkline" false) }}
+    </div>
+
+    {{ partial "status-bar" . }}
+  </section>
+
+  <section class="dashboard-metrics">
+    <h2>Detailed Metrics</h2>
+    <table class="metrics-table" id="metrics-table">
+      <tr>
+        <td class="metric-label">Battery SOC</td>
+        <td class="metric-value" id="metric-soc">--</td>
+        <td class="metric-sparkline" id="sparkline-soc"></td>
+      </tr>
+      <tr>
+        <td class="metric-label">Voltage</td>
+        <td class="metric-value" id="metric-voltage">--</td>
+        <td class="metric-sparkline" id="sparkline-voltage"></td>
+      </tr>
+      <tr>
+        <td class="metric-label">Current</td>
+        <td class="metric-value" id="metric-current">--</td>
+        <td class="metric-sparkline" id="sparkline-current"></td>
+      </tr>
+      <tr>
+        <td class="metric-label">Power</td>
+        <td class="metric-value" id="metric-power">--</td>
+        <td class="metric-sparkline" id="sparkline-power"></td>
+      </tr>
+      <tr>
+        <td class="metric-label">CPU Temp</td>
+        <td class="metric-value" id="metric-temp">--</td>
+        <td class="metric-sparkline" id="sparkline-temp"></td>
+      </tr>
+      <tr>
+        <td class="metric-label">CPU Load</td>
+        <td class="metric-value" id="metric-load">--</td>
+        <td class="metric-sparkline" id="sparkline-load"></td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="article-content entry-content">
+    {{ .Content }}
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof PowerMonitor !== 'undefined') {
+    PowerMonitor.initDashboard();
+  }
+});
+</script>
+{{ end }}

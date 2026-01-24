@@ -1,0 +1,7 @@
+{{/* Calculate reading time: ~200 words per minute */}}
+{{ $wordCount := .WordCount }}
+{{ $readingTime := div $wordCount 200 }}
+{{ if lt $readingTime 1 }}
+  {{ $readingTime = 1 }}
+{{ end }}
+<span class="reading-time">{{ $readingTime }} min read</span>

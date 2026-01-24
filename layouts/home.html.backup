@@ -1,0 +1,23 @@
+{{ define "main" }}
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.19/index.global.min.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script src="{{ .Site.BaseURL }}js/render_calendar.js"></script>
+
+{{- range first 1 (where .Data.Pages "Type" "homepage") -}}
+<main class="article {{ range .Params.categories }} {{ . | urlize }} {{ end }}">
+    <article id="{{ .Title | urlize }}">
+        <section id="content" class="article">
+            {{ if or .Title .Summary }}
+            <header class="entry-header">
+                <h1 class="entry-title">{{ .Title }}</h1>
+                <p class="summary">{{ .Summary }}</p>
+            </header>
+            {{end}}
+            <div class="entry-content">{{ .Content }}</div>
+        </section>
+    </article>
+</main>
+{{ end }} {{ end }}

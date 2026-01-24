@@ -1,23 +1,53 @@
 {{ define "main" }}
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.19/index.global.min.js"></script>
-<script src="https://unpkg.com/@popperjs/core@2"></script>
-<script src="https://unpkg.com/tippy.js@6"></script>
-<script src="{{ .Site.BaseURL }}js/render_calendar.js"></script>
 
-{{- range first 1 (where .Data.Pages "Type" "homepage") -}}
-<main class="article {{ range .Params.categories }} {{ . | urlize }} {{ end }}">
-    <article id="{{ .Title | urlize }}">
-        <section id="content" class="article">
-            {{ if or .Title .Summary }}
-            <header class="entry-header">
-                <h1 class="entry-title">{{ .Title }}</h1>
-                <p class="summary">{{ .Summary }}</p>
-            </header>
-            {{end}}
-            <div class="entry-content">{{ .Content }}</div>
-        </section>
-    </article>
+{{/* Include hero section */}}
+{{ partial "hero-solar" . }}
+
+{{/* Status bar */}}
+{{ partial "status-bar" . }}
+
+<main class="article">
+  <section class="homepage-section">
+    <h2>Recent Posts</h2>
+    <div class="post-grid">
+      {{ range first 3 (where .Site.RegularPages "Type" "posts") }}
+      <article class="post-card">
+        {{ with .Resources.GetMatch "*.{jpg,png,gif}" }}
+        <img src="{{ .RelPermalink }}" alt="{{ $.Title }}" class="post-thumbnail">
+        {{ end }}
+        <h3><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+        <time>{{ .Date.Format "January 2, 2006" }}</time>
+      </article>
+      {{ end }}
+    </div>
+    <p><a href="/posts">View all posts &rarr;</a></p>
+  </section>
+
+  <section class="homepage-section">
+    <h2>Upcoming Events</h2>
+    <p>
+      Check out our <a href="https://bookwhen.com/sequoiafabrica">classes and events</a>
+      at Sequoia Fabrica Makerspace.
+    </p>
+  </section>
+
+  <section class="homepage-section">
+    <h2>Stay Connected</h2>
+    <p>
+      <a href="{{ .Site.Params.Newsletter }}">Join our newsletter</a> |
+      <a href="{{ .Site.Params.instagram }}">Instagram</a> |
+      <a href="{{ .Site.Params.mastodon }}">Mastodon</a>
+    </p>
+  </section>
 </main>
-{{ end }} {{ end }}
+
+<script>
+// Initialize hero gauge with power data
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof PowerMonitor !== 'undefined') {
+    PowerMonitor.initHeroGauge();
+  }
+});
+</script>
+
+{{ end }}
