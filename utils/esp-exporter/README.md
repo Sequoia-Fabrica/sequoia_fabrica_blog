@@ -2,6 +2,8 @@
 
 High-performance Rust-based Prometheus exporter for ESP logger battery monitoring data.
 
+This is an optional component that exposes battery metrics to Prometheus. It reads from the same `esp_log.jsonl` file that the main collectors use, providing an alternative monitoring path for Prometheus/Grafana setups.
+
 ## Features
 
 - **Zero-copy JSON parsing** with serde
