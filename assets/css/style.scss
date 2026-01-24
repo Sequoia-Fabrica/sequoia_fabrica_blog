@@ -1330,6 +1330,11 @@ footer .weather_text {
     display: flex;
     gap: var(--pad);
     flex-wrap: wrap;
+    // Align buttons with the values column (after 300px label column + 1rem gap)
+    padding-left: calc(300px + 1rem);
+    @include media(tablet) {
+        padding-left: 0;
+    }
 
     .time-range-link {
         display: inline-block;
@@ -1370,11 +1375,13 @@ footer .weather_text {
         width: 300px;
         float: left;
         padding-right: 1rem;
+        text-align: right;
         @include media(tablet) {
             float: none;
             width: 100%;
             border-bottom: 0;
             padding-bottom: 0;
+            text-align: left;
         }
     }
     dd {
