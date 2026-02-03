@@ -1,0 +1,11 @@
+{{/*
+  Collapsible section shortcode
+  Usage: {{< collapsible title="Section Title" >}}Content{{< /collapsible >}}
+*/}}
+{{ $title := .Get "title" | default "Click to expand" }}
+<details class="collapsible">
+  <summary class="collapsible-title">{{ $title }}</summary>
+  <div class="collapsible-content">
+    {{ .Inner | markdownify }}
+  </div>
+</details>

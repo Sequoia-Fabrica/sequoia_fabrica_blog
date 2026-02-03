@@ -7,17 +7,18 @@
 				<h1 class="entry-title">{{ .Title }}</h1>
 				<p class="summary">{{ .Summary }}</p>
 				<div class="metadata">
-					{{/*  disable metadata author for about category  */}}
-					{{ if not (in .Params.categories "About") }}
-						{{if (.GetTerms "authors")}}
-							<div class="authors">
-							<span class="byline">Written by</span>
-							{{ range (.GetTerms "authors") }}
-									<span class="author"><a href="{{ .Permalink }}">{{ .Name }}</a></span>
+					<div class="post-meta">
+						<time>{{ .Date.Format "January 2, 2006" }}</time>
+						{{/*  disable metadata author for about category  */}}
+						{{ if not (in .Params.categories "About") }}
+							{{if (.GetTerms "authors")}}
+								{{ range (.GetTerms "authors") }}
+									&bull; by <a href="{{ .Permalink }}">{{ .Name }}</a>
+								{{ end }}
 							{{ end }}
-							</div>
 						{{ end }}
-					{{ end }}
+						&bull; {{ partial "reading-time" . }}
+					</div>
 				</div>
 			</header>
 
