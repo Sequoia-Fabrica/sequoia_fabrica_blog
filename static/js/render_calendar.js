@@ -30,40 +30,59 @@ function formatTime(date) {
 
 function renderEventContent(eventInfo) {
     let isDayGridMonth = eventInfo.view.type == "dayGridMonth";
-    // additional <a> tag is because of a bug in FullCalendar:
-    // see https://github.com/fullcalendar/fullcalendar/issues/6133
-    let eventElement = `
-            <div className="break-normal whitespace-normal">
-            ${isDayGridMonth ? "" : `<a href=${eventInfo.event.url}></a>`}
-                <b>
-                    ${formatTime(
-                        eventInfo.event.start ? eventInfo.event.start : null
-                    )}
-                </b>
-                <span className="pr-1"></span>
-                <br></br>
-                <span>
-                    ${
-                        isDayGridMonth
-                            ? truncateString(eventInfo.event.title, 14)
-                            : eventInfo.event.title
-                    }
-                </span>
-            </div>
-        `;
+
+    // Create DOM elements safely
+    const container = document.createElement('div');
+    container.className = 'break-normal whitespace-normal';
+
+    // Add link for non-month view (FullCalendar bug workaround)
+    if (!isDayGridMonth) {
+        const link = document.createElement('a');
+        // Validate URL protocol
+        const url = eventInfo.event.url || '';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            link.href = url;
+        }
+        container.appendChild(link);
+    }
+
+    // Add time
+    const timeElement = document.createElement('b');
+    timeElement.textContent = formatTime(
+        eventInfo.event.start ? eventInfo.event.start : null
+    );
+    container.appendChild(timeElement);
+
+    // Add spacer
+    const spacer = document.createElement('span');
+    spacer.className = 'pr-1';
+    container.appendChild(spacer);
+
+    // Add line break
+    container.appendChild(document.createElement('br'));
+
+    // Add title
+    const titleElement = document.createElement('span');
+    const titleText = eventInfo.event.title || '';
+    titleElement.textContent = isDayGridMonth
+        ? truncateString(titleText, 14)
+        : titleText;
+    container.appendChild(titleElement);
 
     if (isDayGridMonth) {
         // make a pretty decent alpha numeric uuid string
         // https://stackoverflow.com/a/8084248
         const uuid = Math.random().toString(36).substr(2, 9);
         const popoverId = `popover-${uuid}`;
-        eventElement = `
-            <div class="popover" id="${popoverId}">
-                ${eventElement}
-            </div>
-     `;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'popover';
+        wrapper.id = popoverId;
+        wrapper.appendChild(container);
+
+        return { domNodes: [wrapper] };
     }
-    return { html: eventElement };
+    return { domNodes: [container] };
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -110,15 +129,24 @@ document.addEventListener("DOMContentLoaded", function () {
                     ? formatTime(ev.event.start)
                     : "";
                 const endStr = !!ev.event.end ? formatTime(ev.event.end) : "";
+
+                // Create safe DOM content for tippy
+                const contentDiv = document.createElement('div');
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'text-center';
+                titleDiv.textContent = ev.event.title || '';
+                contentDiv.appendChild(titleDiv);
+
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'text-center';
+                const timeItalic = document.createElement('i');
+                timeItalic.textContent = `${startStr} - ${endStr}`;
+                timeDiv.appendChild(timeItalic);
+                contentDiv.appendChild(timeDiv);
+
                 popover = tippy(`#${element.id}`, {
-                    content: `
-                        <div class="text-center">${ev.event.title}</div>
-                        <div class="text-center">
-                            <i>
-                                ${startStr} - ${endStr}
-                            </i>
-                        </div>
-                    `,
+                    content: contentDiv,
                     allowHTML: true,
                 });
             }

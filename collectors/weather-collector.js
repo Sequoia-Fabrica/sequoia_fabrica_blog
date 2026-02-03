@@ -7,6 +7,7 @@ const fsp = require("fs/promises");
 
 // Import weather module from existing codebase
 const getWeather = require("../static/js/weather.js");
+const { appendToJsonlSafe } = require("./jsonl-utils.js");
 
 // ---------- CONFIG ----------
 const LOGS_DIR = "/var/lib/monitoring";
@@ -26,9 +27,8 @@ async function ensureDirectoryExists(dirPath) {
 
 
 async function appendToJsonl(filePath, data) {
-  const jsonLine = JSON.stringify(data) + '\n';
   try {
-    await fsp.appendFile(filePath, jsonLine);
+    await appendToJsonlSafe(filePath, data);
   } catch (error) {
     console.error("Failed to append to weather JSONL:", error.message);
     throw error;

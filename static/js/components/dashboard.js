@@ -58,54 +58,78 @@ class Dashboard {
 
     const statsElement = document.getElementById("stats");
     if (statsElement) {
-      statsElement.innerHTML = this.createDefinitionList(dashboardStats);
+      this.renderDefinitionList(statsElement, dashboardStats);
     }
+  }
+
+  renderDefinitionList(container, pairs) {
+    container.innerHTML = ''; // Clear existing content
+    pairs.forEach(([term, definition]) => {
+      const dt = document.createElement('dt');
+      dt.textContent = term;
+      container.appendChild(dt);
+
+      const dd = document.createElement('dd');
+      dd.textContent = definition; // Safe: uses textContent, not innerHTML
+      container.appendChild(dd);
+    });
   }
 
   populateForecast(weather) {
     // All forecasts are now solar-relevant since we fetch for solar peak periods
-    
+
     const weatherIgnore = ["snow", "sleet", "wind"]; // because SF is practically tropical
     const weatherIcons = ["today_icon", "tomorrow_icon", "day_after_t_icon"];
     const weatherDays = ["today", "tomorrow", "day after tomorrow"];
 
-    const forecast = weatherIcons
-      .filter(
-        (icon) =>
-          weather[icon] && typeof weather[icon] === "string" && weather[icon].trim() !== ""
-      )
-      .map((icon, index) => {
+    // Whitelist of allowed weather icon class names
+    const allowedWeatherClasses = [
+      "clear-day", "clear-night", "cloudy", "fog", "partly-cloudy-day",
+      "partly-cloudy-night", "rain", "snow", "sleet", "wind"
+    ];
+
+    document.querySelectorAll(".forecast").forEach((element) => {
+      // Clear existing content
+      element.innerHTML = '';
+
+      weatherIcons.forEach((icon, index) => {
         const iconName = weather[icon];
 
-        // Additional safety check - ensure iconName is valid before processing
+        // Validate iconName is a safe string
         if (!iconName || typeof iconName !== "string" || iconName.trim() === "") {
-          return "";
+          return;
         }
 
         const displayText = iconName.replace(/-/g, " ");
-        const weatherIcon = weatherIgnore.includes(iconName)
-          ? "cloudy"
-          : iconName;
+
+        // Determine weather icon with whitelist validation
+        let weatherIcon = weatherIgnore.includes(iconName) ? "cloudy" : iconName;
+        if (!allowedWeatherClasses.includes(weatherIcon)) {
+          weatherIcon = "cloudy"; // fallback to safe default
+        }
+
         const day = weatherDays[index];
 
-        return `
-          <span class="weather_day" id="${day}" title="${displayText}">${day}</span>
-          <span class="weather_icon icon ${weatherIcon}"> </span>
-          <span class="weather_text"> ${displayText}</span>
-        `;
-      })
-      .filter((html) => html !== "") // Remove any empty entries
-      .join("");
+        // Create DOM elements safely
+        const daySpan = document.createElement('span');
+        daySpan.className = 'weather_day';
+        daySpan.id = day;
+        daySpan.title = displayText;
+        daySpan.textContent = day;
 
-    document.querySelectorAll(".forecast").forEach((element) => {
-      element.innerHTML = forecast;
+        const iconSpan = document.createElement('span');
+        iconSpan.className = `weather_icon icon ${weatherIcon}`;
+        iconSpan.textContent = ' ';
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'weather_text';
+        textSpan.textContent = ` ${displayText}`;
+
+        element.appendChild(daySpan);
+        element.appendChild(iconSpan);
+        element.appendChild(textSpan);
+      });
     });
-  }
-
-  createDefinitionList(pairs) {
-    return pairs
-      .map(([term, definition]) => `<dt>${term}</dt><dd>${definition}</dd>`)
-      .join("");
   }
 
   // Utility functions
