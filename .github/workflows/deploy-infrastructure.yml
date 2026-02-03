@@ -13,6 +13,10 @@ on:
         required: false
         default: 'main'
 
+concurrency:
+  group: deployment-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

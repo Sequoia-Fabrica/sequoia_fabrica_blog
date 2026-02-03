@@ -67,6 +67,39 @@ async function getCpuTemperature() {
 // For example, p_in_W means input power (solar) in watts.
 // For example, cpu_temp_c means CPU temperature in Celsius.
 
+async function readESP32LogWithRetry(maxRetries = 3, baseDelayMs = 100) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const data = await fsp.readFile(ESP32_LOG_PATH, "utf8");
+      return data;
+    } catch (error) {
+      lastError = error;
+
+      // Check if it's a retryable error (EBUSY, EAGAIN, or other transient errors)
+      const isRetryable = error.code === 'EBUSY' || error.code === 'EAGAIN';
+
+      if (isRetryable && attempt < maxRetries) {
+        const delayMs = baseDelayMs * Math.pow(2, attempt - 1); // 100ms, 200ms, 400ms
+        console.warn(
+          `ESP32 log read attempt ${attempt}/${maxRetries} failed (${error.code}), retrying in ${delayMs}ms...`
+        );
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      } else if (!isRetryable) {
+        // Non-retryable error, fail immediately
+        throw error;
+      }
+    }
+  }
+
+  // All retries exhausted
+  console.warn(
+    `ESP32 log read failed after ${maxRetries} attempts: ${lastError.message}`
+  );
+  return null;
+}
+
 async function getLatestESP32Metrics() {
   try {
     if (!(await fileExists(ESP32_LOG_PATH))) {
@@ -74,8 +107,11 @@ async function getLatestESP32Metrics() {
       return null;
     }
 
-    // Read the last line of the ESP32 log file
-    const data = await fsp.readFile(ESP32_LOG_PATH, "utf8");
+    // Read the last line of the ESP32 log file with retry logic for EBUSY errors
+    const data = await readESP32LogWithRetry();
+    if (data === null) {
+      return null;
+    }
     const lines = data.trim().split("\n");
     const lastLine = lines[lines.length - 1];
 
@@ -91,7 +127,7 @@ async function getLatestESP32Metrics() {
     //          "sh_mV": -0.034379849, "q_C": -3324.947457, "e_J": -43369.46301,
     //          "soc": 0.707640348, "cv_ms": 0, "flt_ms": 0}
     // Note: i is in mA, p is in mW, v is in V
-    return {
+    const parsedMetrics = {
       timestamp: espMetrics.ts,
       milliseconds: espMetrics.ms,
       unsynced: espMetrics.unsynced,
@@ -105,10 +141,47 @@ async function getLatestESP32Metrics() {
       cv_ms: espMetrics.cv_ms || 0, // CV phase dwell time
       flt_ms: espMetrics.flt_ms || 0 // Float phase dwell time
     };
+
+    // Validate ESP32 metrics before returning
+    if (!validateESP32Metrics(parsedMetrics)) {
+      return null;
+    }
+
+    return parsedMetrics;
   } catch (error) {
     console.warn("Failed to read ESP32 metrics:", error.message);
     return null;
   }
+}
+
+function validateESP32Metrics(metrics) {
+  // Validate voltage is in valid range for 12V system (10-15V)
+  if (typeof metrics.v_V !== 'number' || !Number.isFinite(metrics.v_V) ||
+      metrics.v_V < 10 || metrics.v_V > 15) {
+    console.warn(`Invalid ESP32 voltage: ${metrics.v_V} (expected 10-15V)`);
+    return false;
+  }
+
+  // Validate SOC is between 0 and 1 (0-100%)
+  if (typeof metrics.soc !== 'number' || !Number.isFinite(metrics.soc) ||
+      metrics.soc < 0 || metrics.soc > 1) {
+    console.warn(`Invalid ESP32 SOC: ${metrics.soc} (expected 0-1)`);
+    return false;
+  }
+
+  // Validate current is a finite number
+  if (typeof metrics.i_mA !== 'number' || !Number.isFinite(metrics.i_mA)) {
+    console.warn(`Invalid ESP32 current: ${metrics.i_mA} (expected finite number)`);
+    return false;
+  }
+
+  // Validate power is a finite number
+  if (typeof metrics.p_mW !== 'number' || !Number.isFinite(metrics.p_mW)) {
+    console.warn(`Invalid ESP32 power: ${metrics.p_mW} (expected finite number)`);
+    return false;
+  }
+
+  return true;
 }
 
 function deriveStatus(esp32Metrics) {
