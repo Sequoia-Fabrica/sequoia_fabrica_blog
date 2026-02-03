@@ -238,26 +238,45 @@ async function getSparklineDataFromPowerLog(windowMs = SPARKLINE_WINDOW_MS, buck
       (a, b) => a[0] - b[0]
     );
 
+    // Calculate averages across all buckets for the time range
+    const calcAverage = (arr) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+    const voltageData = sortedBuckets.map(([, bucket]) =>
+      bucket.count > 0 ? bucket.sums.v / bucket.count : 0
+    );
+    const currentDrawData = sortedBuckets.map(([, bucket]) =>
+      bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0
+    );
+    const powerUsageData = sortedBuckets.map(([, bucket]) =>
+      bucket.count > 0 ? Math.abs(bucket.sums.load_w) / bucket.count : 0
+    );
+    const mainBatteryData = sortedBuckets.map(([, bucket]) =>
+      bucket.count > 0 ? bucket.sums.soc / bucket.count : 0
+    );
+    const cpuTempData = sortedBuckets.map(([, bucket]) =>
+      bucket.count > 0 ? bucket.sums.cpu_temp / bucket.count : 0
+    );
+    const cpuLoadData = sortedBuckets.map(([, bucket]) =>
+      bucket.count > 0 ? bucket.sums.cpu_load / bucket.count : 0
+    );
+
     return {
       timestamps: sortedBuckets.map(([time]) => time),
-      voltage: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? bucket.sums.v / bucket.count : 0
-      ),
-      currentDraw: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? Math.abs(bucket.sums.i) / bucket.count : 0
-      ),
-      powerUsage: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? Math.abs(bucket.sums.load_w) / bucket.count : 0
-      ),
-      mainBattery: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? bucket.sums.soc / bucket.count : 0
-      ),
-      cpuTemp: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? bucket.sums.cpu_temp / bucket.count : 0
-      ),
-      cpuLoad: sortedBuckets.map(([, bucket]) =>
-        bucket.count > 0 ? bucket.sums.cpu_load / bucket.count : 0
-      ),
+      voltage: voltageData,
+      currentDraw: currentDrawData,
+      powerUsage: powerUsageData,
+      mainBattery: mainBatteryData,
+      cpuTemp: cpuTempData,
+      cpuLoad: cpuLoadData,
+      // Time-range averages for display values
+      averages: {
+        voltage: calcAverage(voltageData),
+        currentDraw: calcAverage(currentDrawData),
+        powerUsage: calcAverage(powerUsageData),
+        mainBattery: calcAverage(mainBatteryData),
+        cpuTemp: calcAverage(cpuTempData),
+        cpuLoad: calcAverage(cpuLoadData)
+      },
       meta
     };
   } catch (error) {
@@ -275,7 +294,8 @@ function createEmptySparklineData() {
     powerUsage: [],
     mainBattery: [],
     cpuTemp: [],
-    cpuLoad: []
+    cpuLoad: [],
+    averages: null
   };
 }
 
@@ -350,7 +370,7 @@ async function generateStatsJson(timeRangeKey = '24h') {
       timeRange.window_ms,
       timeRange.bucket_ms
     );
-    const { meta: sparklineMeta, ...sparklines } = sparklineResult;
+    const { meta: sparklineMeta, averages: rangeAverages, ...sparklines } = sparklineResult;
 
     // Log sparkline stats for debugging
     if (sparklineMeta) {
@@ -361,6 +381,15 @@ async function generateStatsJson(timeRangeKey = '24h') {
       }
     }
 
+    // For 24h (default), use latest metrics; for other ranges, use time-range averages
+    const useAverages = timeRangeKey !== '24h' && rangeAverages;
+    const displayLoadW = useAverages ? rangeAverages.powerUsage : loadW;
+    const displayVoltage = useAverages ? rangeAverages.voltage : esp32V;
+    const displayCurrentmA = useAverages ? rangeAverages.currentDraw : Math.abs(powerMetrics.esp32_i_mA || 0);
+    const displayCpuTemp = useAverages ? rangeAverages.cpuTemp : powerMetrics.cpu_temp_c;
+    const displayCpuLoad = useAverages ? rangeAverages.cpuLoad : powerMetrics.cpu_load_15min;
+    const displaySocPct = useAverages ? Math.round(rangeAverages.mainBattery) : socPct;
+
     // Create comprehensive stats object
     const stats = {
       // Meta information
@@ -369,20 +398,20 @@ async function generateStatsJson(timeRangeKey = '24h') {
       gen_ms: Date.now() - Date.parse(powerMetrics.ts),
       uptime: formatUptime(powerMetrics.uptime || 0),
 
-      // Power metrics
-      load_W: loadW,
+      // Power metrics (averages for non-24h ranges)
+      load_W: displayLoadW,
       p_in_W: powerMetrics.p_in_W || 0,
 
-      // Battery metrics - ESP32 shunt monitor
-      esp32_v_V: esp32V,
-      esp32_i_mA: powerMetrics.esp32_i_mA || 0,
-      esp32_i_A: powerMetrics.esp32_i_mA ? powerMetrics.esp32_i_mA / 1000 : 0,
-      soc_pct: socPct,
+      // Battery metrics - ESP32 shunt monitor (averages for non-24h ranges)
+      esp32_v_V: displayVoltage,
+      esp32_i_mA: displayCurrentmA,
+      esp32_i_A: displayCurrentmA / 1000,
+      soc_pct: displaySocPct,
       status: powerMetrics.status || "Unknown",
 
-      // System metrics
-      cpu_temp_c: powerMetrics.cpu_temp_c,
-      cpu_load_15min: powerMetrics.cpu_load_15min,
+      // System metrics (averages for non-24h ranges)
+      cpu_temp_c: displayCpuTemp,
+      cpu_load_15min: displayCpuLoad,
 
       // Sparkline data
       sparklines: sparklines,
@@ -390,13 +419,16 @@ async function generateStatsJson(timeRangeKey = '24h') {
       // Sparkline metadata for debugging
       sparkline_meta: sparklineMeta,
 
-      // Formatted values for templates
+      // Time-range averages (always included for reference)
+      range_averages: rangeAverages || null,
+
+      // Formatted values for templates (using display values)
       fmt: {
         cpu: {
-          temp: powerMetrics.cpu_temp_c !== null ? `${fmt(powerMetrics.cpu_temp_c, 1)}°C` : "—",
-          load_15min: fmt(powerMetrics.cpu_load_15min || 0, 2),
+          temp: displayCpuTemp !== null ? `${fmt(displayCpuTemp, 1)}°C` : "—",
+          load_15min: fmt(displayCpuLoad || 0, 2),
         },
-        soc: socPct > 0 ? `${socPct}%` : "—",
+        soc: displaySocPct > 0 ? `${displaySocPct}%` : "—",
         status: powerMetrics.status || "—"
       }
     };
