@@ -285,9 +285,8 @@ class PowerMonitor {
       console.error("Failed to initialize power monitor:", error);
     }
   }
-}
 
-// Static method to initialize hero gauge on homepage
+  // Static method to initialize hero gauge on homepage
   static async initHeroGauge() {
     try {
       const monitor = new PowerMonitor();
