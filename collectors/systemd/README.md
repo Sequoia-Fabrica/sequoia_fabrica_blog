@@ -31,9 +31,9 @@ This directory contains systemd service and timer files for the monitoring data 
 
 2. **Create log directories**:
    ```bash
-   sudo mkdir -p /var/log/esp_logger /var/log/collectors
-   sudo chown monitoring:monitoring /var/log/esp_logger /var/log/collectors
-   sudo chmod 755 /var/log/esp_logger /var/log/collectors
+   sudo mkdir -p /var/log/esp_logger /var/log/monitoring
+   sudo chown monitoring:monitoring /var/log/esp_logger /var/log/monitoring
+   sudo chmod 755 /var/log/esp_logger /var/log/monitoring
    ```
 
 3. **Set permissions for API directory**:
@@ -119,9 +119,9 @@ All timers include randomized delays to prevent simultaneous execution and reduc
 | File | Source | Description |
 |------|--------|-------------|
 | `/var/log/esp_logger/esp_log.jsonl` | esp-logger.service | Raw battery data from ESP32 |
-| `/var/log/collectors/power_metrics.jsonl` | power-collector | Processed power metrics |
-| `/var/log/collectors/weather.json` | weather-collector | Weather forecast cache |
-| `/var/log/collectors/calendar.json` | calendar-collector | Calendar events cache |
+| `/var/log/monitoring/power_metrics.jsonl` | power-collector | Processed power metrics |
+| `/var/log/monitoring/weather_cache.jsonl` | weather-collector | Weather forecast cache |
+| `/var/log/monitoring/calendar_cache.jsonl` | calendar-collector | Calendar events cache |
 
 The data orchestrator reads from these files and generates JSON API files in `/var/www/html/api/`.
 
@@ -133,7 +133,7 @@ The data orchestrator reads from these files and generates JSON API files in `/v
 - View logs: `journalctl -u esp-logger.service -e`
 
 ### Permission issues
-- Ensure the monitoring user can write to `/var/log/esp_logger/` and `/var/log/collectors/`
+- Ensure the monitoring user can write to `/var/log/esp_logger/` and `/var/log/monitoring/`
 - Check that the application directory is readable by the monitoring user
 
 ### Network issues

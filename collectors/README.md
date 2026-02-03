@@ -9,7 +9,7 @@ The collectors gather real-time data from various sources and generate JSON API 
 - **Collector timers**: Periodic jobs that process and cache data
 - **Data orchestrator**: Aggregates all data into web-accessible JSON API files
 
-All collector data is logged to `/var/log/collectors/` for persistence and analysis.
+All collector data is logged to `/var/log/monitoring/` for persistence and analysis.
 
 ## Architecture
 
@@ -37,8 +37,8 @@ All collector data is logged to `/var/log/collectors/` for persistence and analy
           │                      │                      │
           ▼                      ▼                      ▼
     ┌─────────────────────────────────────────────────────────┐
-    │              /var/log/collectors/                       │
-    │  power_metrics.jsonl | weather.json | calendar.json     │
+    │              /var/log/monitoring/                       │
+    │  power_metrics.jsonl | weather_cache.jsonl | calendar_cache.jsonl │
     └─────────────────────┬───────────────────────────────────┘
                           │
                           ▼
@@ -87,7 +87,7 @@ All collector data is logged to `/var/log/collectors/` for persistence and analy
 - CPU thermal sensors (`/sys/class/thermal/thermal_zone0/temp`)
 - System load averages (`os.loadavg()`)
 
-**Output**: `/var/log/collectors/power_metrics.jsonl`
+**Output**: `/var/log/monitoring/power_metrics.jsonl`
 
 **Schedule**: Every 5 minutes
 
@@ -104,7 +104,7 @@ All collector data is logged to `/var/log/collectors/` for persistence and analy
 - BrightSky API (San Francisco weather station)
 - Uses existing `../static/js/weather.js` module
 
-**Output**: `/var/log/collectors/weather.json`
+**Output**: `/var/log/monitoring/weather_cache.jsonl`
 
 **Schedule**: Every 60 minutes
 
@@ -121,7 +121,7 @@ All collector data is logged to `/var/log/collectors/` for persistence and analy
 - BookWhen ICS feed (`http://feeds.bookwhen.com/ical/x3ixm04f5wj7/yf23z4/public.ics`)
 - Uses existing `../static/js/parse_calendar.js` module
 
-**Output**: `/var/log/collectors/calendar.json`
+**Output**: `/var/log/monitoring/calendar_cache.jsonl`
 
 **Schedule**: Every 60 minutes
 
@@ -137,9 +137,9 @@ All collector data is logged to `/var/log/collectors/` for persistence and analy
 **Purpose**: Aggregates all collector data and generates web-accessible JSON APIs
 
 **Input Sources**:
-- `/var/log/collectors/power_metrics.jsonl`
-- `/var/log/collectors/weather.json`
-- `/var/log/collectors/calendar.json`
+- `/var/log/monitoring/power_metrics.jsonl`
+- `/var/log/monitoring/weather_cache.jsonl`
+- `/var/log/monitoring/calendar_cache.jsonl`
 
 **Output Files**:
 - `/var/www/html/api/stats.json` - Power and system statistics
