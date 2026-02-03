@@ -2,6 +2,39 @@
 // Power monitoring component with detailed metrics and sparklines
 
 class PowerMonitor {
+  // Demo data shown when API is unavailable (e.g., local development)
+  static DEMO_DATA = {
+    local_time: "02/02/2026, 15:42:18",
+    uptime: "14d 7h 23m",
+    load_W: 1.47,
+    soc_pct: 87,
+    esp32_v_V: 4.08,
+    esp32_i_mA: -362,
+    cpu_temp_c: 42.3,
+    cpu_load_15min: 0.12,
+    fmt: {
+      soc: "87%",
+      status: "Discharging",
+      cpu: {
+        temp: "42.3°C",
+        load_15min: 12
+      }
+    },
+    weather: {
+      today: "partly-cloudy",
+      temp: 58
+    },
+    sparklines: {
+      voltage: [4.12, 4.11, 4.10, 4.09, 4.08, 4.08, 4.07, 4.08, 4.08, 4.09],
+      powerUsage: [1.52, 1.48, 1.51, 1.45, 1.47, 1.49, 1.46, 1.48, 1.47, 1.47],
+      mainBattery: [92, 91, 90, 89, 89, 88, 88, 87, 87, 87],
+      currentDraw: [-370, -365, -372, -358, -362, -368, -360, -365, -362, -362],
+      cpuTemp: [41.8, 42.1, 42.0, 42.2, 42.5, 42.3, 42.1, 42.2, 42.3, 42.3],
+      cpuLoad: [0.10, 0.11, 0.12, 0.11, 0.13, 0.12, 0.11, 0.12, 0.12, 0.12]
+    },
+    _isDemo: true
+  };
+
   constructor() {
     this.statsUrl = "/api/stats.json";
     this.refreshInterval = null;
@@ -11,11 +44,12 @@ class PowerMonitor {
   async loadData() {
     try {
       const response = await fetch(this.statsUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error("Failed to load power data:", error);
-      return {};
+      console.warn("Using demo data (API unavailable):", error.message);
+      return PowerMonitor.DEMO_DATA;
     }
   }
 
@@ -300,7 +334,9 @@ class PowerMonitor {
         valueEl.textContent = data.fmt.soc;
       }
       if (statusEl && data.fmt?.status) {
-        statusEl.textContent = data.fmt.status;
+        statusEl.textContent = data._isDemo
+          ? `${data.fmt.status} (Demo)`
+          : data.fmt.status;
       }
       if (iconEl) {
         const isCharging = data.fmt?.status?.includes('Charging') || data.fmt?.status === 'Full';
@@ -370,7 +406,9 @@ class PowerMonitor {
       batteryValue.textContent = data.fmt.soc;
     }
     if (batteryLabel && data.fmt?.status) {
-      batteryLabel.textContent = data.fmt.status;
+      batteryLabel.textContent = data._isDemo
+        ? `${data.fmt.status} (Demo)`
+        : data.fmt.status;
     }
 
     // Power card
@@ -390,7 +428,9 @@ class PowerMonitor {
       weatherValue.textContent = data.weather.today.replace(/-/g, ' ');
     }
     if (weatherLabel && data.weather?.temp) {
-      weatherLabel.textContent = `${data.weather.temp}°F`;
+      weatherLabel.textContent = data._isDemo
+        ? `${data.weather.temp}°F (Demo)`
+        : `${data.weather.temp}°F`;
     }
   }
 
