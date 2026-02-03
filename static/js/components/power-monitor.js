@@ -287,6 +287,141 @@ class PowerMonitor {
   }
 }
 
+// Static method to initialize hero gauge on homepage
+  static async initHeroGauge() {
+    try {
+      const monitor = new PowerMonitor();
+      const data = await monitor.loadData();
+
+      const valueEl = document.getElementById('hero-battery-level');
+      const statusEl = document.getElementById('hero-battery-status');
+      const iconEl = document.getElementById('hero-charge-icon');
+
+      if (valueEl && data.fmt?.soc) {
+        valueEl.textContent = data.fmt.soc;
+      }
+      if (statusEl && data.fmt?.status) {
+        statusEl.textContent = data.fmt.status;
+      }
+      if (iconEl) {
+        const isCharging = data.fmt?.status?.includes('Charging') || data.fmt?.status === 'Full';
+        iconEl.textContent = isCharging ? '☀️' : '🔋';
+      }
+
+      // Also populate status bar if present
+      PowerMonitor.populateStatusBar(data);
+    } catch (error) {
+      console.error('Failed to initialize hero gauge:', error);
+    }
+  }
+
+  // Static method to initialize full dashboard on power page
+  static async initDashboard() {
+    try {
+      const monitor = new PowerMonitor();
+      const data = await monitor.loadData();
+
+      // Populate dashboard cards
+      PowerMonitor.populateDashboardCards(data);
+
+      // Populate metrics table
+      PowerMonitor.populateMetricsTable(data, monitor);
+
+      // Populate status bar
+      PowerMonitor.populateStatusBar(data);
+
+      // Start auto-refresh for the power page
+      monitor.startAutoRefresh();
+      window.addEventListener('beforeunload', () => {
+        monitor.stopAutoRefresh();
+      });
+    } catch (error) {
+      console.error('Failed to initialize dashboard:', error);
+    }
+  }
+
+  // Populate the compact status bar (used on homepage and footer)
+  static populateStatusBar(data) {
+    const batteryVal = document.getElementById('status-battery-value');
+    const powerVal = document.getElementById('status-power-value');
+    const weatherIcon = document.getElementById('status-weather-icon');
+    const weatherVal = document.getElementById('status-weather-value');
+    const uptimeVal = document.getElementById('status-uptime-value');
+
+    if (batteryVal && data.fmt?.soc) {
+      batteryVal.textContent = data.fmt.soc;
+    }
+    if (powerVal && data.load_W != null) {
+      powerVal.textContent = `${Number(data.load_W).toFixed(1)}W`;
+    }
+    if (weatherVal && data.weather?.today) {
+      weatherVal.textContent = data.weather.today.replace(/-/g, ' ');
+    }
+    if (uptimeVal && data.uptime) {
+      uptimeVal.textContent = data.uptime;
+    }
+  }
+
+  // Populate dashboard cards on power page
+  static populateDashboardCards(data) {
+    // Battery card
+    const batteryValue = document.getElementById('battery-value');
+    const batteryLabel = document.getElementById('battery-label');
+    if (batteryValue && data.fmt?.soc) {
+      batteryValue.textContent = data.fmt.soc;
+    }
+    if (batteryLabel && data.fmt?.status) {
+      batteryLabel.textContent = data.fmt.status;
+    }
+
+    // Power card
+    const powerValue = document.getElementById('power-value');
+    const powerLabel = document.getElementById('power-label');
+    if (powerValue && data.load_W != null) {
+      powerValue.textContent = `${Number(data.load_W).toFixed(1)}W`;
+    }
+    if (powerLabel) {
+      powerLabel.textContent = 'Current draw';
+    }
+
+    // Weather card
+    const weatherValue = document.getElementById('weather-value');
+    const weatherLabel = document.getElementById('weather-label');
+    if (weatherValue && data.weather?.today) {
+      weatherValue.textContent = data.weather.today.replace(/-/g, ' ');
+    }
+    if (weatherLabel && data.weather?.temp) {
+      weatherLabel.textContent = `${data.weather.temp}°F`;
+    }
+  }
+
+  // Populate detailed metrics table on power page
+  static populateMetricsTable(data, monitor) {
+    const sparklines = data.sparklines || {};
+
+    const metrics = [
+      { id: 'soc', value: data.fmt?.soc || '--', sparkline: sparklines.mainBattery },
+      { id: 'voltage', value: data.esp32_v_V ? `${Number(data.esp32_v_V).toFixed(2)}V` : '--', sparkline: sparklines.voltage },
+      { id: 'current', value: data.esp32_i_mA ? monitor.formatCurrent(data.esp32_i_mA) : '--', sparkline: sparklines.currentDraw },
+      { id: 'power', value: data.load_W ? `${Number(data.load_W).toFixed(2)}W` : '--', sparkline: sparklines.powerUsage },
+      { id: 'temp', value: data.fmt?.cpu?.temp || '--', sparkline: sparklines.cpuTemp },
+      { id: 'load', value: data.fmt?.cpu?.load_15min ? `${data.fmt.cpu.load_15min}%` : '--', sparkline: sparklines.cpuLoad }
+    ];
+
+    metrics.forEach(({ id, value, sparkline }) => {
+      const valueEl = document.getElementById(`metric-${id}`);
+      const sparklineEl = document.getElementById(`sparkline-${id}`);
+
+      if (valueEl) {
+        valueEl.textContent = value;
+      }
+      if (sparklineEl && sparkline) {
+        sparklineEl.innerHTML = monitor.createSparklineSVG(sparkline, 150, 30);
+      }
+    });
+  }
+}
+
 // Export for use in other modules
 if (typeof module !== "undefined" && module.exports) {
   module.exports = PowerMonitor;
