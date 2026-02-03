@@ -4,15 +4,30 @@ This directory contains the monitoring data collection system for the Sequoia Fa
 
 ## Overview
 
-The collectors gather real-time data from various sources and generate JSON API files that power the website's live dashboard and power monitoring features. The system is designed to run autonomously via systemd timers, logging all data to `/var/log/monitoring/` for persistence and analysis.
+The collectors gather real-time data from various sources and generate JSON API files that power the website's live dashboard and power monitoring features. The system runs on a Raspberry Pi server "sol" with:
+- **esp_logger.py**: Continuous service reading battery data from ESP32 via USB serial
+- **Collector timers**: Periodic jobs that process and cache data
+- **Data orchestrator**: Aggregates all data into web-accessible JSON API files
+
+All collector data is logged to `/var/log/monitoring/` for persistence and analysis.
 
 ## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Power Sources  │    │  Weather APIs   │    │  Calendar APIs  │
-│  (AXP20x/INA)  │    │  (BrightSky)    │    │   (BookWhen)    │
+│ ESP32 + INA228  │    │  Weather APIs   │    │  Calendar APIs  │
+│  (USB Serial)   │    │  (BrightSky)    │    │   (BookWhen)    │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
+          │                      │                      │
+          ▼                      │                      │
+┌─────────────────┐              │                      │
+│  esp_logger.py  │              │                      │
+│  (continuous)   │              │                      │
+└─────────┬───────┘              │                      │
+          │                      │                      │
+          ▼                      │                      │
+/var/log/esp_logger/             │                      │
+   esp_log.jsonl                 │                      │
           │                      │                      │
           ▼                      ▼                      ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -44,12 +59,31 @@ The collectors gather real-time data from various sources and generate JSON API 
 
 ## Collectors
 
-### power-collector.js
+### esp_logger.py
 
-**Purpose**: Collects real-time power system metrics from hardware sensors
+**Purpose**: Continuously reads battery data from ESP32 via USB serial
 
 **Data Sources**:
-- AXP20x PMIC (`/sys/class/power_supply/axp20x-ac`, `/sys/class/power_supply/axp20x-battery`)
+- ESP32 microcontroller connected via USB serial (`/dev/ttyUSB0`)
+- INA228 high-precision shunt sensor (voltage, current, power, charge, energy)
+
+**Output**: `/var/log/esp_logger/esp_log.jsonl`
+
+**Schedule**: Continuous (systemd service, not timer)
+
+**Key Metrics**:
+- Battery voltage (0-20V range)
+- Current flow (positive = charging, negative = discharging)
+- Power consumption/generation
+- State of charge percentage
+- Cumulative charge (coulombs) and energy (joules)
+
+### power-collector.js
+
+**Purpose**: Processes ESP logger data and adds system metrics
+
+**Data Sources**:
+- ESP logger output (`/var/log/esp_logger/esp_log.jsonl`)
 - CPU thermal sensors (`/sys/class/thermal/thermal_zone0/temp`)
 - System load averages (`os.loadavg()`)
 
@@ -59,8 +93,6 @@ The collectors gather real-time data from various sources and generate JSON API 
 
 **Key Metrics**:
 - Battery voltage, current, power, and state of charge (SOC)
-- AC input power and status
-- System power consumption calculations
 - CPU temperature and load averages
 - System uptime
 
@@ -117,7 +149,7 @@ The collectors gather real-time data from various sources and generate JSON API 
 **Schedule**: Every 2 minutes
 
 **Key Functions**:
-- Reads most recent data from each JSONL log
+- Reads most recent data from each collector output
 - Generates 24-hour sparkline data (288 5-minute buckets)
 - Creates comprehensive stats object compatible with frontend
 - Atomic file writes to prevent corrupted reads
@@ -125,23 +157,32 @@ The collectors gather real-time data from various sources and generate JSON API 
 
 ## Data Format
 
-### Power Metrics (JSONL)
+### ESP Logger Output (esp_log.jsonl)
 ```json
 {
-  "ts": "2025-08-26T02:25:58.276Z",
-  "ms": 1756175158276,
-  "v": 4.504,
-  "i": 0,
-  "p": 0,
-  "soc": 1.0,
-  "status": "Full",
-  "ac_v": 5.1,
-  "ac_a": 0.288,
-  "ac_w": 1.47,
-  "p_in_w": 1.47,
-  "load_w": 1.47,
+  "ts": "2026-01-12T18:30:00.000Z",
+  "voltage": 13.35,
+  "current": 0.25,
+  "power": 3.34,
+  "soc": 99.0,
+  "charge": 150000,
+  "energy": 2000000,
+  "shunt_voltage": 0.625
+}
+```
+
+### Power Metrics (power_metrics.jsonl)
+```json
+{
+  "ts": "2026-01-12T18:30:00.000Z",
+  "ms": 1736706600000,
+  "v": 13.35,
+  "i": 0.25,
+  "p": 3.34,
+  "soc": 0.99,
+  "status": "Charging",
   "uptime": 1468800,
-  "cpu_temp_c": 36.6,
+  "cpu_temp_c": 42.5,
   "cpu_load_15min": 0.15
 }
 ```
@@ -149,28 +190,31 @@ The collectors gather real-time data from various sources and generate JSON API 
 ### API Output (stats.json)
 ```json
 {
-  "local_time": "25/08/2025, 19:27:05",
+  "local_time": "12/01/2026, 10:30:00",
   "uptime": "17d 0h 25m",
-  "load_W": 1.47,
-  "soc_pct": 100,
-  "status": "Full",
-  "cpu_temp_c": 36.6,
+  "load_W": 3.34,
+  "soc_pct": 99,
+  "status": "Charging",
+  "cpu_temp_c": 42.5,
+  "battery_v": 13.35,
   "sparklines": {
-    "timestamps": [1756175100000],
-    "voltage": [4.504],
-    "powerUsage": [1.47],
-    "mainBattery": [100]
+    "timestamps": [1736706600000],
+    "voltage": [13.35],
+    "powerUsage": [3.34],
+    "mainBattery": [99]
   },
   "fmt": {
-    "soc": "100%",
-    "status": "Full"
+    "soc": "99%",
+    "status": "Charging"
   }
 }
 ```
 
 ## Installation
 
-See `systemd/README.md` for complete deployment instructions including:
+**Automated (Recommended)**: Infrastructure is deployed via Ansible. See `ansible/sol.yml` for the complete configuration. Push changes to the `ansible/` directory to trigger automatic deployment via GitHub Actions.
+
+**Manual**: See `systemd/README.md` for manual deployment instructions including:
 - System user setup
 - Directory permissions
 - Systemd service installation
@@ -178,14 +222,14 @@ See `systemd/README.md` for complete deployment instructions including:
 
 ## Dependencies
 
-- Node.js runtime
-- Existing Hugo site modules:
-  - `../static/js/weather.js`
-  - `../static/js/parse_calendar.js`
-- System access to:
-  - `/sys/class/power_supply/` (AXP20x sensors)
+- **Python 3** (for esp_logger.py)
+  - pyserial (USB serial communication)
+- **Node.js runtime** (for collectors)
+  - Existing Hugo site modules: `../static/js/weather.js`, `../static/js/parse_calendar.js`
+- **System access**:
+  - `/dev/ttyUSB0` (ESP32 serial port)
   - `/sys/class/thermal/` (CPU temperature)
-  - Network access for API calls
+  - Network access for weather/calendar APIs
 
 ## Error Handling
 
