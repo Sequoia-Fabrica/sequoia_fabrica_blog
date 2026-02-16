@@ -281,6 +281,39 @@ class PowerMonitor {
     if (serverElement) {
       this.renderDefinitionList(serverElement, stats);
     }
+
+    this.updateStaleWarning(data);
+  }
+
+  formatDataAge(seconds) {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+    return `${Math.floor(seconds / 86400)}d`;
+  }
+
+  updateStaleWarning(data) {
+    const existing = document.getElementById("stale-warning");
+    if (!data.data_stale) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    const age = this.formatDataAge(data.data_age_s || 0);
+    const msg = `Sensor data is ${age} old — power monitor may be offline.`;
+
+    if (existing) {
+      existing.textContent = msg;
+    } else {
+      const warning = document.createElement("p");
+      warning.id = "stale-warning";
+      warning.className = "stale-data-warning";
+      warning.textContent = msg;
+      const serverElement = document.getElementById("server");
+      if (serverElement) {
+        serverElement.parentNode.insertBefore(warning, serverElement);
+      }
+    }
   }
 
   renderDefinitionList(container, pairs) {

@@ -444,13 +444,25 @@ async function generateStatsJson(timeRangeKey = '24h') {
     const displayCpuLoad = useAverages ? rangeAverages.cpuLoad : powerMetrics.cpu_load_15min;
     const displaySocPct = useAverages ? Math.round(rangeAverages.mainBattery) : socPct;
 
+    // Data freshness: how old is the last power metric entry?
+    const dataAgeMs = Date.now() - (powerMetrics.ms || Date.parse(powerMetrics.ts));
+    const dataAgeSec = Math.round(dataAgeMs / 1000);
+    const dataStale = dataAgeSec > 900; // stale if older than 15 minutes
+
+    if (dataStale) {
+      const ageHours = (dataAgeSec / 3600).toFixed(1);
+      console.warn(`Power data is ${ageHours} hours old — power-collector may have stopped`);
+    }
+
     // Create comprehensive stats object
     const stats = {
       // Meta information
       local_time: new Date().toLocaleString(),
       time_range: timeRangeKey,
-      gen_ms: Date.now() - Date.parse(powerMetrics.ts),
-      uptime: formatUptime(powerMetrics.uptime || 0),
+      gen_ms: dataAgeMs,
+      uptime: formatUptime(os.uptime()),
+      data_age_s: dataAgeSec,
+      data_stale: dataStale,
 
       // Power metrics (averages for non-24h ranges)
       load_W: displayLoadW,

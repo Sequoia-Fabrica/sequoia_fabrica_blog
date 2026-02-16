@@ -906,6 +906,34 @@
               notifempty
               create 0644 monitoring monitoring
           }
+
+          # ESP32 serial log: ~1 line/sec, grows fast.
+          # copytruncate avoids restarting esp-logger.service.
+          {{ collectors_log_dir }}/esp_log.jsonl {
+              daily
+              rotate 3
+              compress
+              delaycompress
+              missingok
+              notifempty
+              copytruncate
+              size 50M
+              create 0644 monitoring monitoring
+          }
+
+          # Collector JSONL data files (power, weather, calendar metrics).
+          {{ collectors_log_dir }}/power_metrics.jsonl
+          {{ collectors_log_dir }}/weather_metrics.jsonl
+          {{ collectors_log_dir }}/calendar_metrics.jsonl {
+              weekly
+              rotate 4
+              compress
+              delaycompress
+              missingok
+              notifempty
+              copytruncate
+              create 0644 monitoring monitoring
+          }
       tags: [collectors]
 
   handlers:
