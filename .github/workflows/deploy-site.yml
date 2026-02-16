@@ -91,13 +91,24 @@ jobs:
             sudo systemctl restart calendar-collector.service
 
             sleep 5
-            for service in esp-logger power-collector data-orchestrator weather-collector calendar-collector; do
-              if ! systemctl is-active --quiet $service.service; then
-                echo "ERROR: $service.service failed to start"
+
+            # esp-logger is long-running (Type=simple) — check it's still active
+            if ! systemctl is-active --quiet esp-logger.service; then
+              echo "ERROR: esp-logger.service failed to start"
+              systemctl status esp-logger.service
+              exit 1
+            fi
+
+            # The rest are oneshot (timer-triggered) — they run and exit.
+            # is-active returns inactive for completed oneshots, so use is-failed instead.
+            for service in power-collector data-orchestrator weather-collector calendar-collector; do
+              if systemctl is-failed --quiet $service.service; then
+                echo "ERROR: $service.service failed"
                 systemctl status $service.service
+                journalctl --unit=$service.service --no-pager --lines=20
                 exit 1
               fi
             done
-            echo "All services started successfully"
+            echo "All services healthy"
 
 
