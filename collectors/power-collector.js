@@ -67,33 +67,41 @@ async function getCpuTemperature() {
 // For example, p_in_W means input power (solar) in watts.
 // For example, cpu_temp_c means CPU temperature in Celsius.
 
-async function readESP32LogWithRetry(maxRetries = 3, baseDelayMs = 100) {
+// Read only the tail of the ESP32 log to get the last line.
+// The ESP32 log grows continuously (~1 line/sec) and can reach hundreds of MB.
+// Reading the full file would OOM on the Raspberry Pi's limited RAM (955MB).
+async function readESP32LogTail(maxRetries = 3, baseDelayMs = 100) {
   let lastError = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const data = await fsp.readFile(ESP32_LOG_PATH, "utf8");
-      return data;
+      const stat = await fsp.stat(ESP32_LOG_PATH);
+      const readSize = Math.min(stat.size, 4096); // last 4KB is plenty for one JSON line
+      const fd = await fsp.open(ESP32_LOG_PATH, "r");
+      try {
+        const buf = Buffer.alloc(readSize);
+        const { bytesRead } = await fd.read(buf, 0, readSize, stat.size - readSize);
+        return buf.slice(0, bytesRead).toString("utf8");
+      } finally {
+        await fd.close();
+      }
     } catch (error) {
       lastError = error;
 
-      // Check if it's a retryable error (EBUSY, EAGAIN, or other transient errors)
       const isRetryable = error.code === 'EBUSY' || error.code === 'EAGAIN';
 
       if (isRetryable && attempt < maxRetries) {
-        const delayMs = baseDelayMs * Math.pow(2, attempt - 1); // 100ms, 200ms, 400ms
+        const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
         console.warn(
           `ESP32 log read attempt ${attempt}/${maxRetries} failed (${error.code}), retrying in ${delayMs}ms...`
         );
         await new Promise(resolve => setTimeout(resolve, delayMs));
       } else if (!isRetryable) {
-        // Non-retryable error, fail immediately
         throw error;
       }
     }
   }
 
-  // All retries exhausted
   console.warn(
     `ESP32 log read failed after ${maxRetries} attempts: ${lastError.message}`
   );
@@ -107,8 +115,8 @@ async function getLatestESP32Metrics() {
       return null;
     }
 
-    // Read the last line of the ESP32 log file with retry logic for EBUSY errors
-    const data = await readESP32LogWithRetry();
+    // Read only the tail of the ESP32 log file (with retry for EBUSY errors)
+    const data = await readESP32LogTail();
     if (data === null) {
       return null;
     }

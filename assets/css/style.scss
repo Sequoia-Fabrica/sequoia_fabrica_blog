@@ -149,6 +149,13 @@ battery-svg {
     }
 }
 
+.stale-data-warning {
+    color: var(--color-high);
+    font-style: italic;
+    padding: 0.5em 0;
+    margin-bottom: 0.5em;
+}
+
 // Make definition lists more sparkline-friendly
 dl#server {
     dd {
