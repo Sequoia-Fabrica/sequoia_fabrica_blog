@@ -45,4 +45,8 @@ The battery meter serves as a live dashboard of our solar power system's health.
 
 Our current setup continues to evolve as we experiment with different battery and solar panel configurations to optimize the balance between uptime and sustainability. The shunt-based monitoring provides precise power flow data, making it informative for both casual visitors and solar power enthusiasts.
 
+## Who built it
+
+Ryan Orban did the solar installation, the current-sensing circuit, and the hardened Raspberry Pi the server runs on, and built the software stack with Camille Teicheira. The site follows [Low-tech Magazine](https://solar.lowtechmagazine.com/)'s solar-powered website, which established the approach this one adapts for a makerspace.
+
 {{% figure src="solar_setup.jpg" %}} The accessibility of this website depends on the weather in San Francisco, CA. {{% /figure %}}
