@@ -1,7 +1,7 @@
 ---
 title: "Power"
 date: ""
-summary: "This website runs on a [solar powered server](/about/the-solar-website) located in San Francisco, and will go off-line during longer periods of bad weather. This page shows live data relating to power supply, power demand, and energy storage."
+summary: "This website runs on a [solar powered server](/power/) located in San Francisco, and will go off-line during longer periods of bad weather. This page shows live data relating to power supply, power demand, and energy storage."
 slug: "power"
 authors: [""]
 categories: [""]
