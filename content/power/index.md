@@ -1,7 +1,7 @@
 ---
 title: "Power"
 date: ""
-summary: "This website runs on a [solar powered server](/about/the-solar-website) located in San Francisco, and will go off-line during longer periods of bad weather. This page shows live data relating to power supply, power demand, and energy storage."
+summary: "This website runs on a [solar powered server](/power/) located in San Francisco, and will go off-line during longer periods of bad weather. This page shows live data relating to power supply, power demand, and energy storage."
 slug: "power"
 authors: [""]
 categories: [""]
@@ -44,5 +44,9 @@ Our monitoring system provides real-time data on:
 The battery meter serves as a live dashboard of our solar power system's health. During sunny periods, you'll see the charging indicator, while cloudy conditions or nighttime will show the actual storage percentage. The ESP32 monitor continuously learns and corrects for current sensor bias, improving accuracy over time.
 
 Our current setup continues to evolve as we experiment with different battery and solar panel configurations to optimize the balance between uptime and sustainability. The shunt-based monitoring provides precise power flow data, making it informative for both casual visitors and solar power enthusiasts.
+
+## Who built it
+
+Ryan Orban did the solar installation, the current-sensing circuit, and the hardened Raspberry Pi the server runs on, and built the software stack with Camille Teicheira. The site follows [Low-tech Magazine](https://solar.lowtechmagazine.com/)'s solar-powered website, which established the approach this one adapts for a makerspace.
 
 {{% figure src="solar_setup.jpg" %}} The accessibility of this website depends on the weather in San Francisco, CA. {{% /figure %}}
